@@ -613,6 +613,7 @@ export default {
           { type: 'action', subType: 'assign_tag', label: 'Assign Tag', icon: '🏷️', color: '#F59E0B' },
           { type: 'action', subType: 'remove_tag', label: 'Remove Tag', icon: '🏷️', color: '#EF4444' },
           { type: 'action', subType: 'assign_persona', label: 'Assign Persona', icon: '👤', color: '#F59E0B' },
+          { type: 'action', subType: 'assign_earn_factor', label: 'Assign Earn Factor', icon: '✨', color: '#F59E0B' },
           { type: 'action', subType: 'submit_form', label: 'Submit Form', icon: '📋', color: '#F59E0B' },
         ],
       },
@@ -865,6 +866,10 @@ export default {
         }
         if ((at === 'assign_tag' || at === 'remove_tag') && !config?.tag_id) errors.push('Tag is required');
         if (at === 'assign_persona' && !config?.persona_id) errors.push('Persona is required');
+        if (at === 'assign_earn_factor') {
+          if (!config?.earn_factor_id) errors.push('Earn factor is required');
+          if (!config?.window_end_days || config.window_end_days <= 0) errors.push('Duration must be greater than 0');
+        }
         if (at === 'submit_form' && !config?.form_id) errors.push('Form template is required');
         if (at === 'send_line' && !config?.content) errors.push('Message content is required');
         if (at === 'send_sms' && !config?.message) errors.push('Message is required');
@@ -997,6 +1002,7 @@ export default {
       assign_tag: { action_type: 'assign_tag', tag_id: '' },
       remove_tag: { action_type: 'remove_tag', tag_id: '' },
       assign_persona: { action_type: 'assign_persona', persona_id: '' },
+      assign_earn_factor: { action_type: 'assign_earn_factor', earn_factor_id: '', window_end_days: 30 },
       submit_form: { action_type: 'submit_form', form_id: '', field_values: {} },
       send_line: { action_type: 'send_line', channel: 'line', content: '', json_content: null },
       send_sms: { action_type: 'send_sms', channel: 'sms', message: '' },

@@ -107,6 +107,39 @@
         </div>
       </template>
 
+      <!-- ═══ ASSIGN EARN FACTOR ═══ -->
+      <template v-if="config?.action_type === 'assign_earn_factor'">
+        <div class="polaris-form-field">
+          <label class="polaris-form-field__label polaris-form-field__label--required">Earn Factor</label>
+          <select
+            class="polaris-form-field__select"
+            :value="config?.earn_factor_id || ''"
+            @change="updateField('earn_factor_id', $event.target.value)"
+          >
+            <option value="" disabled>Select earn factor...</option>
+            <optgroup
+              v-for="group in earnFactorGroups"
+              :key="group.groupName"
+              :label="group.groupName"
+            >
+              <option v-for="ef in group.factors" :key="ef.id" :value="ef.id">{{ ef.displayLabel }}</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="polaris-form-field">
+          <label class="polaris-form-field__label polaris-form-field__label--required">Duration (days)</label>
+          <input
+            class="polaris-form-field__input"
+            type="number"
+            min="1"
+            :value="config?.window_end_days || 30"
+            @input="updateField('window_end_days', parseInt($event.target.value) || 30)"
+          />
+          <span class="polaris-form-field__help">How many days is this offer valid? Starts from the moment the workflow runs for each user.</span>
+        </div>
+      </template>
+
       <!-- ═══ SUBMIT FORM ═══ -->
       <template v-if="config?.action_type === 'submit_form'">
         <div class="polaris-form-field">
@@ -372,6 +405,7 @@ const ACTION_GROUPS = [
       { value: 'assign_tag', label: 'Assign Tag' },
       { value: 'remove_tag', label: 'Remove Tag' },
       { value: 'assign_persona', label: 'Assign Persona' },
+      { value: 'assign_earn_factor', label: 'Assign Earn Factor' },
       { value: 'submit_form', label: 'Submit Form' },
     ],
   },
@@ -395,6 +429,7 @@ const ACTION_DEFAULTS = {
   assign_tag: { tag_id: '' },
   remove_tag: { tag_id: '' },
   assign_persona: { persona_id: '' },
+  assign_earn_factor: { earn_factor_id: '', window_end_days: 30 },
   submit_form: { form_id: '', field_values: {} },
   send_line: { channel: 'line', content: '', json_content: null },
   send_sms: { channel: 'sms', message: '' },
@@ -433,12 +468,39 @@ export default {
     const ticketTypes = ref([]);
     const tags = ref([]);
     const personaGroups = ref([]);
+    const privateEarnFactors = ref([]);
     const forms = ref([]);
 
     const formFieldsLoading = ref(false);
     const formFields = ref([]);
 
     const activeType = computed(() => props.config?.action_type || props.config?.channel || '');
+
+    const earnFactorGroups = computed(() => {
+      const factors = privateEarnFactors.value || [];
+      const groupMap = {};
+      factors.forEach(ef => {
+        const gName = ef?.group_name || 'Ungrouped';
+        if (!groupMap[gName]) groupMap[gName] = { groupName: gName, factors: [] };
+
+        let label = '';
+        if (ef?.earn_factor_type === 'rate') {
+          label = `Earn ${ef.earn_factor_amount} ${ef.target_currency} per unit`;
+        } else if (ef?.earn_factor_type === 'multiplier') {
+          label = `${ef.earn_factor_amount}x ${ef.target_currency} multiplier`;
+        } else {
+          label = `${ef.earn_factor_type} — ${ef.earn_factor_amount} ${ef.target_currency}`;
+        }
+
+        if (ef?.target_currency === 'ticket' && ef?.target_entity_id) {
+          const ticket = ticketTypes.value.find(t => t?.id === ef.target_entity_id);
+          if (ticket?.name) label += ` — ${ticket.name}`;
+        }
+
+        groupMap[gName].factors.push({ id: ef.id, displayLabel: label });
+      });
+      return Object.values(groupMap);
+    });
 
     const jsonContentString = computed(() => {
       const c = props.config?.json_content;
@@ -479,6 +541,7 @@ export default {
           ticketTypes.value = data?.ticket_types || [];
           tags.value = data?.tags || [];
           personaGroups.value = data?.persona_groups || [];
+          privateEarnFactors.value = data?.private_earn_factors || [];
           forms.value = data?.forms || [];
         }
       } catch (err) {
@@ -592,6 +655,8 @@ export default {
       ticketTypes,
       tags,
       personaGroups,
+      privateEarnFactors,
+      earnFactorGroups,
       forms,
       formFieldsLoading,
       formFields,
