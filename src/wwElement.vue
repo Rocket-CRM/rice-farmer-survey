@@ -55,11 +55,11 @@
       <div v-else class="config-panel">
         <div class="config-panel__header">
           <div class="config-panel__header-left">
-            <span class="config-panel__icon" :class="`config-panel__icon--${editingNodeType}`">
-              {{ nodeIconMap[editingNodeType] || '⚙️' }}
+          <span class="config-panel__icon" :class="`config-panel__icon--${isEditingTrigger ? 'trigger' : editingNodeType}`">
+            {{ isEditingTrigger ? '🎯' : (nodeIconMap[editingNodeType] || '⚙️') }}
             </span>
             <div class="config-panel__header-info">
-              <span class="config-panel__type-label">{{ nodeTypeLabels[editingNodeType] || 'Node' }}</span>
+              <span class="config-panel__type-label">{{ isEditingTrigger ? 'Trigger' : (nodeTypeLabels[editingNodeType] || 'Node') }}</span>
               <input
                 v-model="editingConfig.label"
                 class="config-panel__title-input"
@@ -960,6 +960,16 @@ export default {
     // Computed styles
     const isReadOnly = computed(() => props.content?.readOnly === true);
 
+    const triggerNodeId = computed(() => {
+      const targetIds = new Set(edges.value.map(e => e.target));
+      const entry = nodes.value.find(n => n.type === 'condition' && !targetIds.has(n.id));
+      return entry?.id || '';
+    });
+
+    const isEditingTrigger = computed(() => {
+      return editingNodeIdLocal.value && editingNodeIdLocal.value === triggerNodeId.value;
+    });
+
     const rootStyle = computed(() => ({
       '--sidebar-width': props.content?.sidebarWidth || '150px',
       '--sidebar-bg': props.content?.sidebarBackground || '#F9FAFB',
@@ -1064,6 +1074,7 @@ export default {
     
     const handleNodeDelete = (nodeId) => {
       if (isReadOnly.value) return;
+      if (nodeId === triggerNodeId.value) return;
       
       const node = nodes.value.find(n => n.id === nodeId);
       if (!node) return;
@@ -1546,13 +1557,14 @@ export default {
       if (isReadOnly.value) return;
 
       if (event.key === 'Delete' || event.key === 'Backspace') {
-        const selectedNodes = nodes.value.filter((n) => n.selected);
+        const tid = triggerNodeId.value;
+        const selectedNodes = nodes.value.filter((n) => n.selected && n.id !== tid);
         const selectedEdges = edges.value.filter((e) => e.selected);
 
         if (selectedNodes.length > 0 || selectedEdges.length > 0) {
           const selectedNodeIds = new Set(selectedNodes.map((n) => n.id));
 
-          nodes.value = nodes.value.filter((n) => !n.selected);
+          nodes.value = nodes.value.filter((n) => !n.selected || n.id === tid);
           edges.value = edges.value.filter(
             (e) =>
               !e.selected &&
@@ -1590,7 +1602,6 @@ export default {
     watch(
       () => [props.content?.initialNodes, props.content?.initialEdges],
       ([newNodes, newEdges]) => {
-        console.log('[WorkflowBuilder] Initial data changed:', { newNodes, newEdges });
         isInitialLoad.value = true;
 
         const { nodes: vfNodes, edges: vfEdges } = dbToVueFlow(
@@ -1598,25 +1609,43 @@ export default {
           newEdges
         );
 
-        console.log('[WorkflowBuilder] Converted to VueFlow format:', { vfNodes, vfEdges });
-        
+        const isEmpty = vfNodes.length === 0;
+
+        if (isEmpty && !isReadOnly.value) {
+          const triggerId = crypto.randomUUID();
+          const triggerData = getDefaultNodeData('condition');
+          triggerData.label = 'Trigger';
+          vfNodes.push({
+            id: triggerId,
+            type: 'condition',
+            position: { x: 250, y: 200 },
+            data: {
+              ...triggerData,
+              color: getNodeColor('condition'),
+              showEditAction: showEditAction.value,
+              showDeleteAction: false,
+              onEdit: handleNodeEdit,
+              onDelete: handleNodeDelete,
+            },
+          });
+        }
+
         nodes.value = vfNodes;
         edges.value = vfEdges;
-
-        console.log('[WorkflowBuilder] nodes.value is now:', nodes.value);
 
         setIsDirty(false);
         updateVariables();
 
-        // Fit view after nodes are set
         nextTick(() => {
           if (vueFlowRef.value && vfNodes.length > 0) {
-            console.log('[WorkflowBuilder] Fitting view after initial load');
             vueFlowRef.value.fitView({ padding: 0.2 });
           }
           setTimeout(() => {
             isInitialLoad.value = false;
-          }, 100);
+            if (isEmpty && !isReadOnly.value && vfNodes.length > 0) {
+              openConfigPanel(vfNodes[0].id);
+            }
+          }, 150);
         });
       },
       { immediate: true, deep: true }
@@ -1644,7 +1673,7 @@ export default {
       }
     );
 
-    // Watch for color and action changes to update existing nodes
+    // Watch for color, action, and trigger changes to update existing nodes
     watch(
       () => [
         props.content?.conditionNodeColor,
@@ -1654,15 +1683,17 @@ export default {
         props.content?.agentNodeColor,
         props.content?.showEditAction,
         props.content?.showDeleteAction,
+        triggerNodeId.value,
       ],
       () => {
+        const tid = triggerNodeId.value;
         nodes.value = nodes.value.map((node) => ({
           ...node,
           data: {
             ...node.data,
             color: getNodeColor(node.type),
             showEditAction: showEditAction.value,
-            showDeleteAction: showDeleteAction.value,
+            showDeleteAction: node.id === tid ? false : showDeleteAction.value,
             onEdit: handleNodeEdit,
             onDelete: handleNodeDelete,
           },
@@ -1712,6 +1743,8 @@ export default {
       editingConfig,
       editingNodeType,
       editingNodeIdLocal,
+      triggerNodeId,
+      isEditingTrigger,
       nodeTypeLabels,
       nodeIconMap,
       collectionsData,
@@ -2298,6 +2331,7 @@ export default {
   font-size: 18px;
   flex-shrink: 0;
 
+  &--trigger { background: #E0E7FF; }
   &--condition { background: #DBEAFE; }
   &--message { background: #D1FAE5; }
   &--wait { background: #FEF3C7; }
