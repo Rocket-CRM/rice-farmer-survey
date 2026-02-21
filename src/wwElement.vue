@@ -1,12 +1,13 @@
 <template>
   <div class="workflow-builder" :style="rootStyle">
-    <!-- Sidebar Node Palette -->
+    <!-- Left Panel: Node Palette or Config Panel (mutually exclusive) -->
     <div
       v-if="!isReadOnly"
-      class="sidebar"
-      :style="sidebarStyle"
+      class="left-panel"
+      :class="{ 'left-panel--config': configPanelOpen }"
     >
-      <div class="node-palette">
+      <!-- Node Palette (visible when config panel is closed) -->
+      <div v-if="!configPanelOpen" class="node-palette">
         <div class="palette-heading">Actions</div>
         <div v-for="group in nodeGroups" :key="group.label" class="palette-group">
           <div class="palette-group__label">{{ group.label }}</div>
@@ -27,6 +28,77 @@
               </svg>
             </span>
           </div>
+        </div>
+      </div>
+
+      <!-- Config Panel (visible when editing a node) -->
+      <div v-else class="config-panel">
+        <div class="config-panel__header">
+          <div class="config-panel__header-left">
+            <span class="config-panel__icon" :class="`config-panel__icon--${editingNodeType}`">
+              {{ nodeIconMap[editingNodeType] || '⚙️' }}
+            </span>
+            <div class="config-panel__header-info">
+              <span class="config-panel__type-label">{{ nodeTypeLabels[editingNodeType] || 'Node' }}</span>
+              <input
+                v-model="editingConfig.label"
+                class="config-panel__title-input"
+                placeholder="Node label"
+                @input="markConfigChanged"
+              />
+            </div>
+          </div>
+          <button class="config-panel__close-btn" @click="closeConfigPanel" title="Close">
+            <svg viewBox="0 0 20 20" width="16" height="16"><path d="M11.414 10l4.293-4.293a1 1 0 00-1.414-1.414L10 8.586 5.707 4.293a1 1 0 00-1.414 1.414L8.586 10l-4.293 4.293a1 1 0 101.414 1.414L10 11.414l4.293 4.293a1 1 0 001.414-1.414L11.414 10z" fill="currentColor"/></svg>
+          </button>
+        </div>
+
+        <div class="config-panel__content">
+          <ConditionConfig
+            v-if="editingNodeType === 'condition'"
+            :config="editingConfig"
+            :collections="collectionsData"
+            @update="handleConfigUpdate"
+          />
+          <MessageConfig
+            v-else-if="editingNodeType === 'message'"
+            :config="editingConfig"
+            :channels="channelsData"
+            :templates="messageTemplatesData"
+            @update="handleConfigUpdate"
+          />
+          <WaitConfig
+            v-else-if="editingNodeType === 'wait'"
+            :config="editingConfig"
+            @update="handleConfigUpdate"
+          />
+          <ApiConfig
+            v-else-if="editingNodeType === 'api'"
+            :config="editingConfig"
+            @update="handleConfigUpdate"
+          />
+          <ActionConfig
+            v-else-if="editingNodeType === 'action'"
+            :config="editingConfig"
+            :channels="channelsData"
+            @update="handleConfigUpdate"
+          />
+          <AgentConfig
+            v-else-if="editingNodeType === 'agent'"
+            :config="editingConfig"
+            @update="handleConfigUpdate"
+          />
+
+          <div v-if="configValidationErrorsList.length > 0" class="config-panel__errors">
+            <ul>
+              <li v-for="(error, idx) in configValidationErrorsList" :key="idx">{{ error }}</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="config-panel__footer">
+          <button class="config-panel__btn config-panel__btn--cancel" @click="cancelConfigEdit">Cancel</button>
+          <button class="config-panel__btn config-panel__btn--save" @click="saveConfigEdit">Save</button>
         </div>
       </div>
     </div>
@@ -65,81 +137,6 @@
         <Background :color="gridColorValue" :gap="16" />
         <Controls v-if="!isReadOnly" position="bottom-right" />
       </VueFlow>
-    </div>
-
-    <!-- Node Config Panel -->
-    <div
-      v-if="configPanelOpen && !isReadOnly"
-      class="config-panel"
-      :style="configPanelStyle"
-    >
-      <div class="config-panel__header">
-        <div class="config-panel__header-left">
-          <span class="config-panel__icon" :class="`config-panel__icon--${editingNodeType}`">
-            {{ nodeIconMap[editingNodeType] || '⚙️' }}
-          </span>
-          <div class="config-panel__header-info">
-            <span class="config-panel__type-label">{{ nodeTypeLabels[editingNodeType] || 'Node' }}</span>
-            <input
-              v-model="editingConfig.label"
-              class="config-panel__title-input"
-              placeholder="Node label"
-              @input="markConfigChanged"
-            />
-          </div>
-        </div>
-        <button class="config-panel__close-btn" @click="closeConfigPanel" title="Close">
-          <svg viewBox="0 0 20 20" width="16" height="16"><path d="M11.414 10l4.293-4.293a1 1 0 00-1.414-1.414L10 8.586 5.707 4.293a1 1 0 00-1.414 1.414L8.586 10l-4.293 4.293a1 1 0 101.414 1.414L10 11.414l4.293 4.293a1 1 0 001.414-1.414L11.414 10z" fill="currentColor"/></svg>
-        </button>
-      </div>
-
-      <div class="config-panel__content">
-        <ConditionConfig
-          v-if="editingNodeType === 'condition'"
-          :config="editingConfig"
-          :collections="collectionsData"
-          @update="handleConfigUpdate"
-        />
-        <MessageConfig
-          v-else-if="editingNodeType === 'message'"
-          :config="editingConfig"
-          :channels="channelsData"
-          :templates="messageTemplatesData"
-          @update="handleConfigUpdate"
-        />
-        <WaitConfig
-          v-else-if="editingNodeType === 'wait'"
-          :config="editingConfig"
-          @update="handleConfigUpdate"
-        />
-        <ApiConfig
-          v-else-if="editingNodeType === 'api'"
-          :config="editingConfig"
-          @update="handleConfigUpdate"
-        />
-        <ActionConfig
-          v-else-if="editingNodeType === 'action'"
-          :config="editingConfig"
-          :channels="channelsData"
-          @update="handleConfigUpdate"
-        />
-        <AgentConfig
-          v-else-if="editingNodeType === 'agent'"
-          :config="editingConfig"
-          @update="handleConfigUpdate"
-        />
-
-        <div v-if="configValidationErrorsList.length > 0" class="config-panel__errors">
-          <ul>
-            <li v-for="(error, idx) in configValidationErrorsList" :key="idx">{{ error }}</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="config-panel__footer">
-        <button class="config-panel__btn config-panel__btn--cancel" @click="cancelConfigEdit">Cancel</button>
-        <button class="config-panel__btn config-panel__btn--save" @click="saveConfigEdit">Save</button>
-      </div>
     </div>
   </div>
 </template>
@@ -1604,7 +1601,6 @@ export default {
       defaultEdgeOptions,
       isReadOnly,
       rootStyle,
-      sidebarStyle,
       canvasStyle,
       gridColorValue,
       getNodeColor,
@@ -1617,7 +1613,6 @@ export default {
       onKeyDown,
       onPaneReady,
       configPanelOpen,
-      configPanelStyle,
       editingConfig,
       editingNodeType,
       editingNodeIdLocal,
@@ -1655,19 +1650,23 @@ export default {
   overflow: hidden;
   font-family: var(--p-font-family-sans);
   background: var(--p-color-bg-surface-secondary);
-  position: relative;
 }
 
-// Sidebar
-.sidebar {
+// Left panel — holds either the node palette or the config panel
+.left-panel {
   grid-column: 1;
   padding: 0;
   background: var(--p-color-bg-surface);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
   border-right: var(--p-border-width-025) solid var(--p-color-border);
   width: 240px;
+  transition: width 0.2s ease;
+
+  &--config {
+    width: 380px;
+  }
 }
 
 // Node palette
@@ -1675,6 +1674,8 @@ export default {
   display: flex;
   flex-direction: column;
   padding: var(--p-space-400) 0;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .palette-heading {
@@ -2016,19 +2017,13 @@ export default {
 }
 
 // ============================================
-// Config Panel - right sidebar overlay
+// Config Panel - fills left panel slot
 // ============================================
 .config-panel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 20;
   display: flex;
   flex-direction: column;
+  height: 100%;
   background: var(--p-color-bg);
-  border-left: 1px solid #E1E3E5;
-  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.08);
   font-family: var(--p-font-family-sans);
   overflow: hidden;
 }
@@ -2191,16 +2186,12 @@ export default {
 
 // Responsive
 @media (max-width: 768px) {
-  .sidebar {
+  .left-panel {
     display: none;
   }
   
   .workflow-builder {
     grid-template-columns: 1fr;
-  }
-
-  .config-panel {
-    width: 100% !important;
   }
 }
 </style>
