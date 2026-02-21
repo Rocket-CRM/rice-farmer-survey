@@ -15,11 +15,8 @@
         </span>
       </div>
       <div class="toolbar__right">
-        <button class="toolbar__btn toolbar__btn--save" @click="handleToolbarSave">
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3H3v14h14V3z"/><path d="M14 3v4H6V3"/><path d="M6 17v-6h8v6"/></svg>
-          Save
-        </button>
-        <button class="toolbar__btn toolbar__btn--status" @click="openStatusPanel">Update status</button>
+        <button class="toolbar__btn toolbar__btn--default" @click="handleExit">Exit</button>
+        <button class="toolbar__btn toolbar__btn--primary" @click="openStatusPanel">Update status</button>
       </div>
     </div>
 
@@ -924,6 +921,13 @@ export default {
       save();
     };
 
+    const handleExit = () => {
+      emit('trigger-event', {
+        name: 'exit',
+        event: { is_dirty: isDirty.value },
+      });
+    };
+
     // Computed styles
     const isReadOnly = computed(() => props.content?.readOnly === true);
 
@@ -1731,6 +1735,7 @@ export default {
       saveStatus,
       handleNameChange,
       handleToolbarSave,
+      handleExit,
       /* wwEditor:start */
       isEditing,
       /* wwEditor:end */
@@ -1767,10 +1772,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--p-space-400);
-  height: 52px;
-  background: var(--p-color-bg-surface);
+  padding: 0 var(--p-space-500);
+  height: 56px;
+  background: var(--p-color-bg);
   border-bottom: var(--p-border-width-025) solid var(--p-color-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   z-index: 10;
 }
 
@@ -1865,7 +1871,7 @@ export default {
   transition: all 0.1s ease;
   white-space: nowrap;
 
-  &--save {
+  &--default {
     background: var(--p-color-bg-surface);
     color: var(--p-color-text);
     border: var(--p-border-width-025) solid var(--p-color-border);
@@ -1873,13 +1879,9 @@ export default {
     &:hover {
       background: var(--p-color-bg-surface-hover);
     }
-
-    svg {
-      flex-shrink: 0;
-    }
   }
 
-  &--status {
+  &--primary {
     background: #303030;
     color: #FFFFFF;
     border: var(--p-border-width-025) solid #303030;
@@ -1900,11 +1902,11 @@ export default {
   flex-direction: column;
   overflow: hidden;
   border-right: var(--p-border-width-025) solid var(--p-color-border);
-  width: 240px;
+  width: 300px;
   transition: width 0.2s ease;
 
   &--config {
-    width: 380px;
+    width: 440px;
   }
 }
 
@@ -2432,7 +2434,7 @@ export default {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 380px;
+  width: 400px;
   z-index: 25;
   display: flex;
   flex-direction: column;
@@ -2503,11 +2505,12 @@ export default {
 
 .status-panel__select {
   width: 100%;
-  padding: var(--p-space-200) var(--p-space-300);
+  padding: 10px var(--p-space-300);
   font-size: var(--p-font-size-325);
-  border: var(--p-border-width-025) solid var(--p-color-border);
+  line-height: var(--p-font-line-height-500);
+  border: 1px solid var(--p-color-input-border);
   border-radius: var(--p-border-radius-200);
-  background: var(--p-color-bg-surface);
+  background-color: var(--p-color-input-bg-surface);
   color: var(--p-color-text);
   cursor: pointer;
   appearance: none;
@@ -2515,10 +2518,17 @@ export default {
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 36px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+  transition: border-color 0.1s ease, box-shadow 0.1s ease;
+
+  &:hover {
+    border-color: var(--p-color-input-border-hover);
+  }
 
   &:focus {
     outline: none;
-    box-shadow: 0 0 0 2px var(--p-color-border-focus);
+    border-color: var(--p-color-border-focus);
+    box-shadow: 0 0 0 1px var(--p-color-border-focus);
   }
 }
 

@@ -223,6 +223,15 @@ export default {
       getTestEvent: '() => ({ is_active: true })',
       /* wwEditor:end */
     },
+    {
+      name: 'exit',
+      label: { en: 'On Exit' },
+      event: { is_dirty: false },
+      default: true,
+      /* wwEditor:start */
+      getTestEvent: '() => ({ is_dirty: false })',
+      /* wwEditor:end */
+    },
   ],
   properties: {
     // ─── Data Binding ────────────────────────────────────────────
