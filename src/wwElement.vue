@@ -15,8 +15,8 @@
         </span>
       </div>
       <div class="toolbar__right">
-        <button class="toolbar__btn toolbar__btn--default" @click="handleExit">Exit</button>
-        <button class="toolbar__btn toolbar__btn--primary" @click="openStatusPanel">Update status</button>
+        <button class="polaris-btn polaris-btn--default" @click="handleExit">Exit</button>
+        <button class="polaris-btn polaris-btn--primary" @click="openStatusPanel">Update status</button>
       </div>
     </div>
 
@@ -163,16 +163,9 @@
 
     <!-- Status Panel (right overlay) -->
     <div v-if="statusPanelOpen" class="status-panel">
-      <div class="status-panel__header">
-        <span class="status-panel__title">Flow status</span>
-        <button class="status-panel__close" @click="closeStatusPanel">
-          <svg viewBox="0 0 20 20" width="16" height="16"><path d="M11.414 10l4.293-4.293a1 1 0 00-1.414-1.414L10 8.586 5.707 4.293a1 1 0 00-1.414 1.414L8.586 10l-4.293 4.293a1 1 0 101.414 1.414L10 11.414l4.293 4.293a1 1 0 001.414-1.414L11.414 10z" fill="currentColor"/></svg>
-        </button>
-      </div>
-
       <div class="status-panel__content">
         <div class="polaris-form-field">
-          <label class="polaris-form-field__label">Status <span class="polaris-form-field__required">*</span></label>
+          <label class="polaris-form-field__label">Flow status <span class="polaris-form-field__required">*</span></label>
           <p class="polaris-form-field__help">Select a status for all actions in your workflow</p>
           <select class="polaris-form-field__select" v-model="pendingStatus">
             <option :value="true">Live</option>
@@ -235,7 +228,7 @@ const DeleteIcon = () => h('svg', {
   h('line', { x1: '14', y1: '11', x2: '14', y2: '17' })
 ]);
 
-// Helper to create node action toolbar
+// Helper to create node action toolbar (right-aligned)
 const createNodeActions = (props, showEdit, showDelete) => {
   const actions = [];
   
@@ -270,6 +263,19 @@ const createNodeActions = (props, showEdit, showDelete) => {
   return h('div', { class: 'node-actions-toolbar' }, actions);
 };
 
+// Helper to create node body with optional type subtitle
+const createNodeBody = (label, icon, badgeColor, typeSubtitle) => {
+  const children = [];
+  const textChildren = [];
+  if (typeSubtitle) {
+    textChildren.push(h('span', { class: 'node-type-subtitle' }, typeSubtitle));
+  }
+  textChildren.push(h('span', { class: 'node-label' }, label));
+  children.push(h('div', { class: 'node-label-group' }, textChildren));
+  children.push(h('div', { class: 'node-icon-badge', style: { '--badge-color': badgeColor } }, icon));
+  return h('div', { class: 'node-body' }, children);
+};
+
 // Node icon mapping
 const nodeIconMap = {
   condition: '🔀',
@@ -300,21 +306,24 @@ const ConditionNode = {
   setup(props) {
     const showEdit = computed(() => props.data?.showEditAction !== false);
     const showDelete = computed(() => props.data?.showDeleteAction !== false);
+    const isTrigger = computed(() => props.data?.isTrigger === true);
     
     return () =>
       h(
         'div',
         {
-          class: ['flow-node', 'condition-node', { selected: props.selected }],
+          class: ['flow-node', 'condition-node', { selected: props.selected, 'trigger-node': isTrigger.value }],
           style: { '--node-color': props.data?.color || '#3B82F6' },
         },
         [
           createNodeActions(props, showEdit.value, showDelete.value),
           h(Handle, { type: 'target', position: Position.Left, id: 'input', class: 'flow-handle flow-handle-left' }),
-          h('div', { class: 'node-body' }, [
-            h('span', { class: 'node-label' }, props.data?.label || 'Condition'),
-            h('div', { class: 'node-icon-badge', style: { '--badge-color': props.data?.color || '#3B82F6' } }, '🔀'),
-          ]),
+          createNodeBody(
+            props.data?.label || 'Condition',
+            isTrigger.value ? '🎯' : '🔀',
+            props.data?.color || '#3B82F6',
+            isTrigger.value ? 'Trigger' : null
+          ),
           h(Handle, {
             type: 'source',
             position: Position.Right,
@@ -1694,6 +1703,7 @@ export default {
             color: getNodeColor(node.type),
             showEditAction: showEditAction.value,
             showDeleteAction: node.id === tid ? false : showDeleteAction.value,
+            isTrigger: node.id === tid,
             onEdit: handleNodeEdit,
             onDelete: handleNodeDelete,
           },
@@ -1804,11 +1814,10 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--p-space-500);
-  height: 56px;
-  background: var(--p-color-bg);
+  padding: 0 var(--p-space-400);
+  height: 52px;
+  background: var(--p-color-bg-surface);
   border-bottom: var(--p-border-width-025) solid var(--p-color-border);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   z-index: 10;
 }
 
@@ -1891,39 +1900,6 @@ export default {
   flex-shrink: 0;
 }
 
-.toolbar__btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--p-space-100);
-  padding: var(--p-space-150) var(--p-space-300);
-  border-radius: var(--p-border-radius-200);
-  font-size: var(--p-font-size-300);
-  font-weight: var(--p-font-weight-medium);
-  cursor: pointer;
-  transition: all 0.1s ease;
-  white-space: nowrap;
-
-  &--default {
-    background: var(--p-color-bg-surface);
-    color: var(--p-color-text);
-    border: var(--p-border-width-025) solid var(--p-color-border);
-
-    &:hover {
-      background: var(--p-color-bg-surface-hover);
-    }
-  }
-
-  &--primary {
-    background: #303030;
-    color: #FFFFFF;
-    border: var(--p-border-width-025) solid #303030;
-
-    &:hover {
-      background: #1A1A1A;
-    }
-  }
-}
-
 // Left panel — holds either the node palette or the config panel
 .left-panel {
   grid-column: 1;
@@ -1938,7 +1914,7 @@ export default {
   transition: width 0.2s ease;
 
   &--config {
-    width: 440px;
+    width: 480px;
   }
 }
 
@@ -2075,7 +2051,6 @@ export default {
 // Show action toolbar ONLY when selected (not hover)
 :deep(.flow-node.selected .node-actions-toolbar) {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
   pointer-events: auto;
 }
 
@@ -2088,12 +2063,31 @@ export default {
   padding: var(--p-space-400);
 }
 
+:deep(.node-label-group) {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+:deep(.node-type-subtitle) {
+  font-size: 10px;
+  font-weight: var(--p-font-weight-semibold);
+  color: var(--p-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
 :deep(.node-label) {
   font-size: var(--p-font-size-325);
   font-weight: var(--p-font-weight-semibold);
   color: var(--p-color-text);
   line-height: var(--p-font-line-height-400);
-  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 // Icon badge (positioned on right like Shopify Flow)
@@ -2113,18 +2107,17 @@ export default {
 :deep(.node-actions-toolbar) {
   position: absolute;
   top: -40px;
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
+  right: 0;
   display: flex;
   gap: var(--p-space-100);
   background: var(--p-color-bg-surface);
   border: var(--p-border-width-025) solid var(--p-color-border);
   border-radius: var(--p-border-radius-200);
   padding: var(--p-space-100);
-  box-shadow: var(--p-shadow-400);
+  box-shadow: var(--p-shadow-200);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: opacity 0.15s ease;
   z-index: 10;
 }
 
@@ -2440,26 +2433,6 @@ export default {
   background: var(--p-color-bg-surface);
   border-left: var(--p-border-width-025) solid var(--p-color-border);
   box-shadow: -4px 0 16px rgba(0, 0, 0, 0.08);
-}
-
-.status-panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--p-space-400);
-  border-bottom: var(--p-border-width-025) solid var(--p-color-border);
-}
-
-.status-panel__title {
-  font-size: var(--p-font-size-350);
-  font-weight: var(--p-font-weight-bold);
-  color: var(--p-color-text);
-}
-
-.status-panel__close {
-  @include polaris-button-base;
-  @include polaris-button-plain;
-  @include polaris-button-icon-only;
 }
 
 .status-panel__content {

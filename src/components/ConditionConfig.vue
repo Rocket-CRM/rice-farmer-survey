@@ -249,7 +249,7 @@
         No condition groups yet
       </div>
 
-      <button class="polaris-button polaris-button--outline polaris-button--full-width" @click="addGroup">
+      <button class="polaris-button polaris-button--outline polaris-button--full-width" style="margin-top: var(--p-space-300);" @click="addGroup">
         + Add Group
       </button>
     </div>
@@ -644,6 +644,12 @@ export default {
 <style lang="scss" scoped>
 @import 'polaris-weweb-styles';
 
+// All text uses Polaris type scale:
+// Labels: 13px (--p-font-size-300)
+// Body: 13px (--p-font-size-300)
+// Headings: 14px (--p-font-size-325) semibold
+// Group headers: 13px (--p-font-size-300) regular
+
 .polaris-card {
   @include polaris-tokens;
   @include polaris-card;
@@ -662,15 +668,23 @@ export default {
 }
 
 .polaris-text {
-  &--body-md { @include polaris-text-body; }
-  &--heading-sm { @include polaris-text-heading-sm; }
+  &--body-md {
+    font-size: var(--p-font-size-300);
+    color: var(--p-color-text);
+  }
+  &--heading-sm {
+    font-size: var(--p-font-size-325);
+    font-weight: var(--p-font-weight-semibold);
+    color: var(--p-color-text);
+  }
 }
 
 .polaris-button {
   @include polaris-button-base;
-  &--plain { @include polaris-button-plain; }
+  font-size: var(--p-font-size-300);
+  &--plain { @include polaris-button-plain; font-size: var(--p-font-size-300); }
   &--critical { color: var(--p-color-text-critical); }
-  &--outline { @include polaris-button-outline; }
+  &--outline { @include polaris-button-outline; font-size: var(--p-font-size-300); }
   &--icon-only { @include polaris-button-icon-only; }
   &--full-width { @include polaris-button-full-width; }
   &--slim { @include polaris-button-slim; }
@@ -679,6 +693,7 @@ export default {
     background: var(--p-color-bg-surface);
     color: var(--p-color-text);
     box-shadow: inset 0 0 0 1px var(--p-color-border);
+    font-size: var(--p-font-size-300);
     &:first-child { border-radius: var(--p-border-radius-200) 0 0 var(--p-border-radius-200); }
     &:last-child { border-radius: 0 var(--p-border-radius-200) var(--p-border-radius-200) 0; }
   }
@@ -703,9 +718,14 @@ export default {
   &--operator { width: 120px; flex-shrink: 0; }
 }
 
-.polaris-text-field__label { @include polaris-label; }
-.polaris-text-field__input { @include polaris-input; }
-.polaris-select__input { @include polaris-select; }
+.polaris-text-field__label {
+  font-size: var(--p-font-size-300);
+  font-weight: var(--p-font-weight-medium);
+  color: var(--p-color-text);
+}
+
+.polaris-text-field__input { @include polaris-input; font-size: var(--p-font-size-300); }
+.polaris-select__input { @include polaris-select; font-size: var(--p-font-size-300); }
 
 .polaris-condition-list {
   display: flex;
@@ -724,6 +744,7 @@ export default {
   display: flex;
   justify-content: center;
   padding: var(--p-space-100) 0;
+  font-size: var(--p-font-size-300);
 }
 
 .polaris-condition-fields {
@@ -756,5 +777,5 @@ export default {
 
 .polaris-card + .polaris-card { margin-top: var(--p-space-300); }
 .polaris-card--subdued + .polaris-card--subdued { margin-top: var(--p-space-300); }
-.polaris-text-field + .polaris-text-field { margin-top: var(--p-space-300); }
+.polaris-text-field + .polaris-text-field { margin-top: var(--p-space-200); }
 </style>
