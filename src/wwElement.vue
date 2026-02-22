@@ -16,6 +16,14 @@
       </div>
       <div class="toolbar__right">
         <button
+          class="toolbar__icon-btn"
+          :class="{ 'toolbar__icon-btn--active': settingsPanelOpen }"
+          @click="toggleSettingsPanel"
+          title="Workflow Settings"
+        >
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path d="M17.2 8l-1-.2c-.1-.4-.3-.7-.5-1l.5-.9c.2-.4.2-.9-.2-1.2l-1.2-1.2c-.4-.3-.8-.4-1.2-.2l-.9.5c-.3-.2-.7-.4-1-.5L11.5 2c-.1-.5-.5-.8-1-.8h-1.7c-.5 0-.9.4-1 .8l-.2 1c-.4.1-.7.3-1 .5l-.9-.5c-.4-.2-.9-.1-1.2.2L3.3 4.7c-.3.3-.4.8-.2 1.2l.5.9c-.2.3-.4.7-.5 1l-1 .2c-.5.1-.8.5-.8 1v1.7c0 .5.4.9.8 1l1 .2c.1.4.3.7.5 1l-.5.9c-.2.4-.1.9.2 1.2l1.2 1.2c.3.3.8.4 1.2.2l.9-.5c.3.2.7.4 1 .5l.2 1c.1.5.5.8 1 .8h1.7c.5 0 .9-.4 1-.8l.2-1c.4-.1.7-.3 1-.5l.9.5c.4.2.9.1 1.2-.2l1.2-1.2c.3-.3.4-.8.2-1.2l-.5-.9c.2-.3.4-.7.5-1l1-.2c.5-.1.8-.5.8-1V9c0-.5-.4-.9-.8-1zM10 13c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3z"/></svg>
+        </button>
+        <button
           v-if="workflowMeta.is_active"
           class="polaris-btn polaris-btn--default"
           @click="handleBatchRun"
@@ -25,14 +33,14 @@
       </div>
     </div>
 
-    <!-- Left Panel: Node Palette or Config Panel (mutually exclusive) -->
+    <!-- Left Panel: Node Palette, Config Panel, or Settings (mutually exclusive) -->
     <div
       v-if="!isReadOnly"
       class="left-panel"
-      :class="{ 'left-panel--config': configPanelOpen }"
+      :class="{ 'left-panel--config': configPanelOpen || settingsPanelOpen }"
     >
-      <!-- Node Palette (visible when config panel is closed) -->
-      <div v-if="!configPanelOpen" class="node-palette">
+      <!-- Node Palette (visible when neither panel is open) -->
+      <div v-if="!configPanelOpen && !settingsPanelOpen" class="node-palette">
         <div class="palette-heading">Actions</div>
         <div v-for="group in nodeGroups" :key="group.label" class="palette-group">
           <div class="palette-group__label">{{ group.label }}</div>
@@ -57,7 +65,7 @@
       </div>
 
       <!-- Config Panel (visible when editing a node) -->
-      <div v-else class="config-panel">
+      <div v-else-if="configPanelOpen" class="config-panel">
         <div class="config-panel__header">
           <div class="config-panel__header-left">
           <span class="config-panel__icon" :class="`config-panel__icon--${isEditingTrigger ? 'trigger' : editingNodeType}`">
@@ -126,6 +134,32 @@
         <div class="config-panel__footer">
           <button class="polaris-btn polaris-btn--default" @click="cancelConfigEdit">Cancel</button>
           <button class="polaris-btn polaris-btn--primary" @click="saveConfigEdit">Save</button>
+        </div>
+      </div>
+
+      <!-- Settings Panel (visible when settings is open) -->
+      <div v-else-if="settingsPanelOpen" class="config-panel">
+        <div class="config-panel__header">
+          <div class="config-panel__header-left">
+            <span class="config-panel__icon config-panel__icon--settings">⚙️</span>
+            <div class="config-panel__header-info">
+              <span class="config-panel__type-label">Workflow</span>
+              <span class="config-panel__title-static">Settings</span>
+            </div>
+          </div>
+          <button class="config-panel__close-btn" @click="closeSettingsPanel" title="Close">
+            <svg viewBox="0 0 20 20" width="16" height="16"><path d="M11.414 10l4.293-4.293a1 1 0 00-1.414-1.414L10 8.586 5.707 4.293a1 1 0 00-1.414 1.414L8.586 10l-4.293 4.293a1 1 0 101.414 1.414L10 11.414l4.293 4.293a1 1 0 001.414-1.414L11.414 10z" fill="currentColor"/></svg>
+          </button>
+        </div>
+        <div class="config-panel__content">
+          <WorkflowSettings
+            :config="workflowConfigLocal"
+            @update="handleWorkflowConfigUpdate"
+          />
+        </div>
+        <div class="config-panel__footer">
+          <button class="polaris-btn polaris-btn--default" @click="closeSettingsPanel">Cancel</button>
+          <button class="polaris-btn polaris-btn--primary" @click="saveWorkflowSettings">Save</button>
         </div>
       </div>
     </div>
@@ -260,6 +294,7 @@ import ApiConfig from './components/ApiConfig.vue';
 import ActionConfig from './components/ActionConfig.vue';
 import AgentConfig from './components/AgentConfig.vue';
 import NodeUserList from './components/NodeUserList.vue';
+import WorkflowSettings from './components/WorkflowSettings.vue';
 
 // SVG Icons for node actions
 const EditIcon = () => h('svg', { 
@@ -656,6 +691,7 @@ export default {
     ActionConfig,
     AgentConfig,
     NodeUserList,
+    WorkflowSettings,
   },
   props: {
     uid: { type: String, required: true },
@@ -879,6 +915,7 @@ export default {
     const openConfigPanel = (nodeId) => {
       const node = nodes.value.find(n => n.id === nodeId);
       if (!node) return;
+      if (settingsPanelOpen.value) settingsPanelOpen.value = false;
 
       const cleanData = getCleanNodeData(node.data);
       editingConfig.value = deepClone(cleanData);
@@ -1137,6 +1174,45 @@ export default {
       batchConfirmOpen.value = false;
       batchUserIds.value = [];
       batchMatchingCount.value = 0;
+    };
+
+    // ─── Workflow Settings Panel ─────────────────────────────────
+    const settingsPanelOpen = ref(false);
+    const workflowConfigLocal = ref({});
+
+    const toggleSettingsPanel = () => {
+      if (settingsPanelOpen.value) {
+        closeSettingsPanel();
+      } else {
+        openSettingsPanel();
+      }
+    };
+
+    const openSettingsPanel = () => {
+      if (configPanelOpen.value) closeConfigPanel();
+      workflowConfigLocal.value = JSON.parse(JSON.stringify(workflowMeta.value?.config || {}));
+      settingsPanelOpen.value = true;
+    };
+
+    const closeSettingsPanel = () => {
+      settingsPanelOpen.value = false;
+      workflowConfigLocal.value = {};
+    };
+
+    const handleWorkflowConfigUpdate = (newConfig) => {
+      workflowConfigLocal.value = newConfig;
+    };
+
+    const saveWorkflowSettings = () => {
+      workflowMeta.value = { ...workflowMeta.value, config: JSON.parse(JSON.stringify(workflowConfigLocal.value)) };
+      setIsDirty(true);
+      updateVariables();
+      settingsPanelOpen.value = false;
+
+      emit('trigger-event', {
+        name: 'workflow-changed',
+        event: { is_dirty: true },
+      });
     };
 
     // Toolbar handlers
@@ -2070,6 +2146,12 @@ export default {
       handleBatchRun,
       confirmBatchDispatch,
       closeBatchConfirm,
+      settingsPanelOpen,
+      workflowConfigLocal,
+      toggleSettingsPanel,
+      closeSettingsPanel,
+      handleWorkflowConfigUpdate,
+      saveWorkflowSettings,
       userListOpen,
       userListNodeId,
       userListNodeName,
@@ -2187,6 +2269,23 @@ export default {
   .toolbar__badge--live & {
     background: var(--p-color-icon-success);
   }
+}
+
+.toolbar__icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--p-border-radius-200);
+  background: transparent;
+  color: var(--p-color-text-secondary);
+  cursor: pointer;
+  transition: all 0.1s ease;
+
+  &:hover { background: var(--p-color-bg-surface-hover); color: var(--p-color-text); }
+  &--active { background: var(--p-color-bg-surface-selected); color: var(--p-color-text-brand); }
 }
 
 .toolbar__right {
@@ -2649,6 +2748,7 @@ export default {
   font-size: 18px;
   flex-shrink: 0;
 
+  &--settings { background: #F3F4F6; }
   &--trigger { background: #E0E7FF; }
   &--condition { background: #DBEAFE; }
   &--message { background: #D1FAE5; }
@@ -2685,6 +2785,13 @@ export default {
   &:focus {
     outline: none;
   }
+}
+
+.config-panel__title-static {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--p-color-text);
+  line-height: 1.4;
 }
 
 .config-panel__close-btn {
