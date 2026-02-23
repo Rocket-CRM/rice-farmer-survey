@@ -188,36 +188,20 @@ export default {
       }
     };
 
-    const upsert = async (table, data) => {
-      if (!supabaseUrl.value || !authToken.value) return null;
+    const patchRow = async (table, id, data) => {
+      if (!supabaseUrl.value || !authToken.value || !id) return null;
       try {
-        const res = await fetch(`${supabaseUrl.value}/rest/v1/${table}`, {
-          method: 'POST',
-          headers: {
-            ...headers.value,
-            'Prefer': 'resolution=merge-duplicates,return=representation',
-          },
-          body: JSON.stringify(Array.isArray(data) ? data : [data]),
+        const res = await fetch(`${supabaseUrl.value}/rest/v1/${table}?id=eq.${id}`, {
+          method: 'PATCH',
+          headers: { ...headers.value, 'Prefer': 'return=representation' },
+          body: JSON.stringify(data),
         });
-        if (!res.ok) throw new Error(`Upsert ${table} failed: ${res.status}`);
+        if (!res.ok) throw new Error(`Patch ${table} failed: ${res.status}`);
         const result = await res.json();
-        return Array.isArray(data) ? result : result?.[0];
+        return result?.[0];
       } catch (err) {
-        console.error(`[AgentBuilder] Upsert ${table} error:`, err);
+        console.error(`[AgentBuilder] Patch ${table} error:`, err);
         throw err;
-      }
-    };
-
-    const deleteRows = async (table, column, values) => {
-      if (!supabaseUrl.value || !authToken.value || !values?.length) return;
-      try {
-        const inStr = values.map(v => `"${v}"`).join(',');
-        await fetch(`${supabaseUrl.value}/rest/v1/${table}?${column}=in.(${inStr})`, {
-          method: 'DELETE',
-          headers: headers.value,
-        });
-      } catch (err) {
-        console.error(`[AgentBuilder] Delete ${table} error:`, err);
       }
     };
 
@@ -276,15 +260,16 @@ export default {
     };
 
     const fetchAgentFull = async (agentId) => {
-      const [agentArr, actions, outcomes] = await Promise.all([
-        query('amp_agent', '*', `id=eq.${agentId}`),
-        query('amp_agent_action', '*', `agent_id=eq.${agentId}&order=sort_order.asc`),
-        query('amp_agent_outcome', '*', `agent_id=eq.${agentId}&order=sort_order.asc`),
-      ]);
-
-      const agent = agentArr?.[0];
-      if (!agent) return null;
-      return { agent, actions: actions || [], outcomes: outcomes || [] };
+      const data = await rpc('bff_get_agent_full', { p_agent_id: agentId });
+      if (!data || data?.error) {
+        console.error('[AgentBuilder] bff_get_agent_full error:', data?.error);
+        return null;
+      }
+      return {
+        agent: data?.agent || data,
+        actions: data?.actions || [],
+        outcomes: data?.outcomes || [],
+      };
     };
 
     // ─── Navigation ──────────────────────────────────
@@ -376,76 +361,61 @@ export default {
 
       isSaving.value = true;
       try {
-        const agentPayload = {
-          ...(selectedAgentId.value ? { id: selectedAgentId.value } : {}),
-          name: form.value.name,
-          description: form.value.description || null,
-          objective: form.value.objective || null,
-          tone: form.value.tone || null,
-          context_hint: form.value.context_hint || null,
-          max_actions_per_execution: form.value.max_actions_per_execution || 3,
-          cooldown_hours: form.value.cooldown_hours || null,
-          quiet_hours: form.value.quiet_hours || null,
-          blackout_dates: form.value.blackout_dates?.length ? form.value.blackout_dates : null,
-          constraints: form.value.constraints?.length ? form.value.constraints : null,
-        };
-
-        const savedAgent = await upsert('amp_agent', agentPayload);
-        if (!savedAgent?.id) throw new Error('Failed to save agent');
-
-        const agentId = savedAgent.id;
-        selectedAgentId.value = agentId;
-
-        // Sync actions: upsert current, delete removed
-        const existingActionIds = agentActions.value.filter(a => a.id && !a._tempId).map(a => a.id);
-        const savedActionIds = [];
-
-        for (let i = 0; i < agentActions.value.length; i++) {
-          const action = agentActions.value[i];
-          const actionPayload = {
-            ...(action.id && !action._tempId ? { id: action.id } : {}),
-            agent_id: agentId,
+        const cleanAction = (action, idx) => {
+          const out = {
             action_type: action.action_type,
             name: action.name || null,
             is_enabled: action.is_enabled !== false,
             variable_config: action.variable_config || {},
             guardrail_config: action.guardrail_config || {},
             eligibility_conditions: action.eligibility_conditions || null,
-            sort_order: i + 1,
+            sort_order: idx + 1,
           };
-          const saved = await upsert('amp_agent_action', actionPayload);
-          if (saved?.id) savedActionIds.push(saved.id);
-        }
+          if (action.id && !action._tempId) out.id = action.id;
+          return out;
+        };
 
-        const removedActionIds = existingActionIds.filter(id => !savedActionIds.includes(id));
-        if (removedActionIds.length) await deleteRows('amp_agent_action', 'id', removedActionIds);
-
-        // Sync outcomes: upsert current, delete removed
-        const existingOutcomeIds = agentOutcomes.value.filter(o => o.id && !o._tempId).map(o => o.id);
-        const savedOutcomeIds = [];
-
-        for (let i = 0; i < agentOutcomes.value.length; i++) {
-          const outcome = agentOutcomes.value[i];
-          const outcomePayload = {
-            ...(outcome.id && !outcome._tempId ? { id: outcome.id } : {}),
-            agent_id: agentId,
+        const cleanOutcome = (outcome, idx) => {
+          const out = {
             name: outcome.name || null,
             event_type: outcome.event_type || null,
             event_filter: outcome.event_filter || null,
             classification: outcome.classification || 'good',
             weight_column: outcome.weight_column || null,
-            sort_order: i + 1,
+            sort_order: idx + 1,
           };
-          const saved = await upsert('amp_agent_outcome', outcomePayload);
-          if (saved?.id) savedOutcomeIds.push(saved.id);
+          if (outcome.id && !outcome._tempId) out.id = outcome.id;
+          return out;
+        };
+
+        const payload = {
+          p_agent_id: selectedAgentId.value || null,
+          p_name: form.value.name,
+          p_description: form.value.description || null,
+          p_objective: form.value.objective || null,
+          p_tone: form.value.tone || null,
+          p_context_hint: form.value.context_hint || null,
+          p_max_actions_per_execution: form.value.max_actions_per_execution || 3,
+          p_constraints: form.value.constraints?.length ? form.value.constraints : null,
+          p_cooldown_hours: form.value.cooldown_hours || null,
+          p_quiet_hours: form.value.quiet_hours || null,
+          p_blackout_dates: form.value.blackout_dates?.length ? form.value.blackout_dates : null,
+          p_actions: agentActions.value.map(cleanAction),
+          p_outcomes: agentOutcomes.value.map(cleanOutcome),
+        };
+
+        const result = await rpc('bff_upsert_agent_with_children', payload);
+        if (!result || result?.error) {
+          throw new Error(result?.error || 'BFF upsert failed');
         }
 
-        const removedOutcomeIds = existingOutcomeIds.filter(id => !savedOutcomeIds.includes(id));
-        if (removedOutcomeIds.length) await deleteRows('amp_agent_outcome', 'id', removedOutcomeIds);
+        const agentId = result?.agent_id || result?.id || selectedAgentId.value;
+        if (!agentId) throw new Error('No agent ID returned from save');
+        selectedAgentId.value = agentId;
 
-        // Refresh data
         const full = await fetchAgentFull(agentId);
         if (full) {
+          form.value.name = full.agent.name || form.value.name;
           agentActions.value = full.actions;
           agentOutcomes.value = full.outcomes;
           setSelectedAgent(full.agent);
@@ -456,7 +426,7 @@ export default {
 
         emit('trigger-event', {
           name: 'agent-saved',
-          event: { agent: savedAgent, actions: agentActions.value, outcomes: agentOutcomes.value },
+          event: { agent: full?.agent || { id: agentId }, actions: agentActions.value, outcomes: agentOutcomes.value },
         });
       } catch (err) {
         console.error('[AgentBuilder] Save error:', err);
