@@ -70,6 +70,7 @@
           v-if="activeTab === 'outcomes'"
           :outcomes="agentOutcomes"
           :collections="collectionsData"
+          :outcomeEventConfigs="outcomeEventConfigs"
           @update="handleOutcomesUpdate"
         />
 
@@ -149,6 +150,7 @@ export default {
     const actionOptionsData = ref({});
     const collectionsData = ref([]);
     const audiencesData = ref([]);
+    const outcomeEventConfigs = ref([]);
 
     // ─── Supabase Helpers ────────────────────────────
     const supabaseUrl = computed(() => props.content?.supabaseUrl?.replace(/\/+$/, '') || '');
@@ -260,6 +262,11 @@ export default {
     const fetchAudiences = async () => {
       const data = await rpc('bff_list_audiences');
       if (data?.success) audiencesData.value = data?.data || [];
+    };
+
+    const fetchOutcomeEventConfigs = async () => {
+      const data = await query('amp_outcome_event_config', '*', 'is_active=eq.true&order=sort_order.asc');
+      outcomeEventConfigs.value = data || [];
     };
 
     const fetchCollections = async () => {
@@ -481,6 +488,7 @@ export default {
         fetchActionOptions(),
         fetchAudiences(),
         fetchCollections(),
+        fetchOutcomeEventConfigs(),
       ]);
     };
 
@@ -514,7 +522,7 @@ export default {
     return {
       currentView, activeTab, tabs, isLoading, isSaving, saveError,
       agents, form, agentActions, agentOutcomes, isDirtyState,
-      actionTypeConfigs, actionOptionsData, audiencesData, collectionsData,
+      actionTypeConfigs, actionOptionsData, audiencesData, collectionsData, outcomeEventConfigs,
       rootStyle,
       createAgent, openAgent, goBack,
       handleFormUpdate, handleActionsUpdate, handleOutcomesUpdate,

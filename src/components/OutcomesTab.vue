@@ -46,12 +46,14 @@
               @update:modelValue="updateOutcome(idx, 'classification', $event)"
             />
 
-            <PolarisTextField
+            <PolarisSelect
+              v-if="getWeightColumnOptions(outcome?.event_type).length > 0"
               label="Weight Column"
               :modelValue="outcome?.weight_column || ''"
               @update:modelValue="updateOutcome(idx, 'weight_column', $event)"
-              placeholder="e.g. order_value, final_amount"
-              helpText="Optional column name used to weight this outcome's impact"
+              :options="getWeightColumnOptions(outcome?.event_type)"
+              placeholder="Select weight column..."
+              helpText="Optional — weight this outcome's impact by this value"
             />
 
             <!-- Event Filter (collapsible) -->
@@ -66,6 +68,7 @@
                 :modelValue="outcome?.event_filter || { match: 'all', groups: [] }"
                 @update:modelValue="updateOutcome(idx, 'event_filter', $event)"
                 :collections="collections"
+                :filterableFields="getFilterableFields(outcome?.event_type)"
               />
             </PolarisConfigSection>
           </PolarisBlockStack>
@@ -76,6 +79,7 @@
 </template>
 
 <script>
+import { computed } from 'vue';
 import {
   PolarisTextField, PolarisSelect, PolarisButton, PolarisText,
   PolarisCard, PolarisCardSection, PolarisBlockStack, PolarisInline,
@@ -97,18 +101,29 @@ export default {
   props: {
     outcomes: { type: Array, default: () => [] },
     collections: { type: Array, default: () => [] },
+    outcomeEventConfigs: { type: Array, default: () => [] },
   },
   emits: ['update'],
   setup(props, { emit }) {
-    const eventTypeOptions = [
-      { value: 'purchase_completed', label: 'Purchase Completed' },
-      { value: 'points_earned', label: 'Points Earned' },
-      { value: 'form_submitted', label: 'Form Submitted' },
-      { value: 'email_clicked', label: 'Email Clicked' },
-      { value: 'email_opened', label: 'Email Opened' },
-      { value: 'unsubscribed', label: 'Unsubscribed' },
-      { value: 'tag_assigned', label: 'Tag Assigned' },
-    ];
+    const eventTypeOptions = computed(() =>
+      (props.outcomeEventConfigs || []).map(c => ({
+        value: c?.event_type || '',
+        label: c?.display_label || c?.event_type || '',
+      }))
+    );
+
+    const getWeightColumnOptions = (eventType) => {
+      if (!eventType) return [];
+      const config = (props.outcomeEventConfigs || []).find(c => c?.event_type === eventType);
+      const cols = config?.weight_columns || [];
+      return cols.map(c => ({ value: c?.key || '', label: c?.label || c?.key || '' }));
+    };
+
+    const getFilterableFields = (eventType) => {
+      if (!eventType) return [];
+      const config = (props.outcomeEventConfigs || []).find(c => c?.event_type === eventType);
+      return config?.filterable_fields || [];
+    };
 
     const hasEventFilter = (outcome) => {
       const ef = outcome?.event_filter;
@@ -122,7 +137,7 @@ export default {
         name: '',
         event_type: '',
         event_filter: { match: 'all', groups: [] },
-        classification: 'good',
+        classification: '',
         weight_column: '',
         sort_order: list.length + 1,
       });
@@ -136,13 +151,28 @@ export default {
     };
 
     const updateOutcome = (idx, field, value) => {
-      const list = (props.outcomes || []).map((o, i) =>
-        i === idx ? { ...o, [field]: value } : o
-      );
+      const list = (props.outcomes || []).map((o, i) => {
+        if (i !== idx) return o;
+        const updated = { ...o, [field]: value };
+        if (field === 'event_type') {
+          const config = (props.outcomeEventConfigs || []).find(c => c?.event_type === value);
+          const validKeys = (config?.weight_columns || []).map(c => c?.key);
+          if (!validKeys.includes(updated.weight_column)) {
+            updated.weight_column = '';
+          }
+          if (!o.classification || o.classification === 'good') {
+            updated.classification = config?.default_classification || 'good';
+          }
+        }
+        return updated;
+      });
       emit('update', list);
     };
 
-    return { eventTypeOptions, hasEventFilter, addOutcome, removeOutcome, updateOutcome };
+    return {
+      eventTypeOptions, getWeightColumnOptions, getFilterableFields,
+      hasEventFilter, addOutcome, removeOutcome, updateOutcome,
+    };
   },
 };
 </script>
