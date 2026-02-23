@@ -405,12 +405,19 @@ export default {
         };
 
         const result = await rpc('bff_upsert_agent_with_children', payload);
-        if (!result || result?.error) {
-          throw new Error(result?.error || 'BFF upsert failed');
+        console.log('[AgentBuilder] BFF upsert result:', JSON.stringify(result));
+
+        if (result?.error || result?.message) {
+          throw new Error(result?.error || result?.message || 'BFF upsert failed');
         }
 
-        const agentId = result?.agent_id || result?.id || selectedAgentId.value;
-        if (!agentId) throw new Error('No agent ID returned from save');
+        const agentId = (typeof result === 'string' ? result : null)
+          || result?.agent_id
+          || result?.id
+          || result?.data?.id
+          || result?.data?.agent_id
+          || selectedAgentId.value;
+        if (!agentId) throw new Error(`No agent ID in response: ${JSON.stringify(result)}`);
         selectedAgentId.value = agentId;
 
         const full = await fetchAgentFull(agentId);
