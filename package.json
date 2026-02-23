@@ -1,14 +1,11 @@
 {
-  "name": "workflow-builder",
+  "name": "agent-builder",
   "version": "0.0.1",
   "scripts": {
     "build": "weweb build",
     "serve": "weweb serve"
   },
   "dependencies": {
-    "@vue-flow/background": "^1.3.2",
-    "@vue-flow/controls": "^1.1.2",
-    "@vue-flow/core": "^1.41.3",
     "polaris-weweb-styles": "^2.0.0"
   },
   "devDependencies": {
