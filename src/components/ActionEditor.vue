@@ -215,6 +215,7 @@ export default {
     action: { type: Object, default: () => ({}) },
     actionTypeConfigs: { type: Array, default: () => [] },
     actionOptions: { type: Object, default: () => ({}) },
+    audiences: { type: Array, default: () => [] },
     collections: { type: Array, default: () => [] },
   },
   emits: ['update'],
@@ -308,21 +309,56 @@ export default {
       if (!entityTable) return [];
       const opts = props.actionOptions || {};
 
-      const entityMap = {
-        tag_master: 'tags',
-        persona_master: 'personas',
-        ticket_type: 'ticket_types',
-        form_master: 'forms',
-        earn_factor_master: 'earn_factors',
-        amp_audience_master: 'audiences',
-      };
+      if (entityTable === 'tag_master') {
+        return (opts.tags || []).map(t => ({
+          value: t?.id || '',
+          label: t?.tag_name || t?.name || '',
+        }));
+      }
 
-      const key = entityMap[entityTable] || entityTable;
-      const items = opts[key] || [];
-      return items.map(item => ({
-        value: item?.id || item?.value || '',
-        label: item?.name || item?.label || item?.id || '',
-      }));
+      if (entityTable === 'persona_master') {
+        const groups = opts.persona_groups || [];
+        const flat = [];
+        groups.forEach(g => {
+          (g?.personas || []).forEach(p => {
+            flat.push({
+              value: p?.id || '',
+              label: `${p?.persona_name || ''}${g?.group_name ? ` (${g.group_name})` : ''}`,
+            });
+          });
+        });
+        return flat;
+      }
+
+      if (entityTable === 'ticket_type') {
+        return (opts.ticket_types || []).map(t => ({
+          value: t?.id || '',
+          label: t?.name || t?.ticket_code || '',
+        }));
+      }
+
+      if (entityTable === 'form_templates') {
+        return (opts.forms || []).map(f => ({
+          value: f?.id || '',
+          label: f?.name || f?.code || '',
+        }));
+      }
+
+      if (entityTable === 'earn_factor') {
+        return (opts.private_earn_factors || []).map(ef => ({
+          value: ef?.id || '',
+          label: `${ef?.group_name || ''} — ${ef?.earn_factor_type || ''} (${ef?.earn_factor_amount ?? ''} ${ef?.target_currency || ''})`,
+        }));
+      }
+
+      if (entityTable === 'amp_audience_master') {
+        return (props.audiences || []).map(a => ({
+          value: a?.id || '',
+          label: a?.name || '',
+        }));
+      }
+
+      return [];
     };
 
     return {

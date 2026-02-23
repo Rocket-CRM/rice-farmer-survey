@@ -61,6 +61,7 @@
           :actions="agentActions"
           :actionTypeConfigs="actionTypeConfigs"
           :actionOptions="actionOptionsData"
+          :audiences="audiencesData"
           :collections="collectionsData"
           @update="handleActionsUpdate"
         />
@@ -147,6 +148,7 @@ export default {
     const actionTypeConfigs = ref([]);
     const actionOptionsData = ref({});
     const collectionsData = ref([]);
+    const audiencesData = ref([]);
 
     // ─── Supabase Helpers ────────────────────────────
     const supabaseUrl = computed(() => props.content?.supabaseUrl?.replace(/\/+$/, '') || '');
@@ -252,7 +254,12 @@ export default {
 
     const fetchActionOptions = async () => {
       const data = await rpc('bff_get_amp_action_options');
-      if (data) actionOptionsData.value = data;
+      if (data?.success) actionOptionsData.value = data;
+    };
+
+    const fetchAudiences = async () => {
+      const data = await rpc('bff_list_audiences');
+      if (data?.success) audiencesData.value = data?.data || [];
     };
 
     const fetchCollections = async () => {
@@ -399,10 +406,10 @@ export default {
           p_tone: form.value.tone || null,
           p_context_hint: form.value.context_hint || null,
           p_max_actions_per_execution: form.value.max_actions_per_execution || 3,
-          p_constraints: form.value.constraints?.length ? form.value.constraints : null,
+          p_constraints: form.value.constraints?.length ? form.value.constraints : [],
           p_cooldown_hours: form.value.cooldown_hours || null,
           p_quiet_hours: form.value.quiet_hours || null,
-          p_blackout_dates: form.value.blackout_dates?.length ? form.value.blackout_dates : null,
+          p_blackout_dates: form.value.blackout_dates?.filter(d => d) || [],
           p_actions: agentActions.value.map(cleanAction),
           p_outcomes: agentOutcomes.value.map(cleanOutcome),
         };
@@ -472,6 +479,7 @@ export default {
         fetchAgents(),
         fetchActionTypeConfigs(),
         fetchActionOptions(),
+        fetchAudiences(),
         fetchCollections(),
       ]);
     };
@@ -506,7 +514,7 @@ export default {
     return {
       currentView, activeTab, tabs, isLoading, isSaving, saveError,
       agents, form, agentActions, agentOutcomes, isDirtyState,
-      actionTypeConfigs, actionOptionsData, collectionsData,
+      actionTypeConfigs, actionOptionsData, audiencesData, collectionsData,
       rootStyle,
       createAgent, openAgent, goBack,
       handleFormUpdate, handleActionsUpdate, handleOutcomesUpdate,

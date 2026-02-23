@@ -20,6 +20,7 @@
           :action="editingAction"
           :actionTypeConfigs="actionTypeConfigs"
           :actionOptions="actionOptions"
+          :audiences="audiences"
           :collections="collections"
           @update="editingAction = $event"
         />
@@ -88,6 +89,7 @@ export default {
     actions: { type: Array, default: () => [] },
     actionTypeConfigs: { type: Array, default: () => [] },
     actionOptions: { type: Object, default: () => ({}) },
+    audiences: { type: Array, default: () => [] },
     collections: { type: Array, default: () => [] },
   },
   emits: ['update'],
