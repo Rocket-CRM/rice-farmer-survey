@@ -235,8 +235,9 @@ export default {
     const fetchAgents = async () => {
       isLoading.value = true;
       try {
-        const data = await query('amp_agent', '*, amp_agent_action(count), amp_agent_outcome(count)', 'order=created_at.desc');
-        agents.value = data || [];
+        const result = await rpc('bff_list_agents');
+        const data = result?.success ? (result?.data || []) : [];
+        agents.value = data;
         setAgentsVar(agents.value);
         setAgentCount(agents.value.length);
       } finally {
@@ -260,16 +261,18 @@ export default {
     };
 
     const fetchAgentFull = async (agentId) => {
-      const data = await rpc('bff_get_agent_full', { p_agent_id: agentId });
-      if (!data || data?.error) {
-        console.error('[AgentBuilder] bff_get_agent_full error:', data?.error);
+      const result = await rpc('bff_get_agent_full', { p_agent_id: agentId });
+      if (!result?.success || !result?.data) {
+        console.error('[AgentBuilder] bff_get_agent_full error:', result?.description);
         return null;
       }
-      return {
-        agent: data?.agent || data,
-        actions: data?.actions || [],
-        outcomes: data?.outcomes || [],
-      };
+      const d = result.data;
+      const actions = d.actions || [];
+      const outcomes = d.outcomes || [];
+      const agent = { ...d };
+      delete agent.actions;
+      delete agent.outcomes;
+      return { agent, actions, outcomes };
     };
 
     // ─── Navigation ──────────────────────────────────
@@ -405,19 +408,13 @@ export default {
         };
 
         const result = await rpc('bff_upsert_agent_with_children', payload);
-        console.log('[AgentBuilder] BFF upsert result:', JSON.stringify(result));
 
-        if (result?.error || result?.message) {
-          throw new Error(result?.error || result?.message || 'BFF upsert failed');
+        if (!result?.success) {
+          throw new Error(result?.description || result?.title || 'BFF upsert failed');
         }
 
-        const agentId = (typeof result === 'string' ? result : null)
-          || result?.agent_id
-          || result?.id
-          || result?.data?.id
-          || result?.data?.agent_id
-          || selectedAgentId.value;
-        if (!agentId) throw new Error(`No agent ID in response: ${JSON.stringify(result)}`);
+        const agentId = result?.data?.agent_id || selectedAgentId.value;
+        if (!agentId) throw new Error('No agent ID returned from save');
         selectedAgentId.value = agentId;
 
         const full = await fetchAgentFull(agentId);

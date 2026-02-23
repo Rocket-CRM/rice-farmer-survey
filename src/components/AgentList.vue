@@ -47,8 +47,8 @@
               </PolarisBadge>
               <span v-else class="agent-table__muted">—</span>
             </td>
-            <td class="agent-table__center">{{ agent?.amp_agent_action?.[0]?.count ?? agent?.action_count ?? 0 }}</td>
-            <td class="agent-table__center">{{ agent?.amp_agent_outcome?.[0]?.count ?? agent?.outcome_count ?? 0 }}</td>
+            <td class="agent-table__center">{{ agent?.action_count ?? 0 }}</td>
+            <td class="agent-table__center">{{ agent?.outcome_count ?? 0 }}</td>
             <td>
               <label class="toggle-switch" @click.stop>
                 <input
