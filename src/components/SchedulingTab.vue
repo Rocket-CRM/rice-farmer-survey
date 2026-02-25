@@ -223,6 +223,11 @@ export default {
 
 .scheduling-tab {
   padding: 0;
+
+  input[type="radio"],
+  input[type="checkbox"] {
+    accent-color: var(--p-color-bg-fill-brand, #2C6ECB);
+  }
 }
 
 .blackout-row {

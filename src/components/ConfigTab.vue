@@ -1,61 +1,76 @@
 <template>
   <div class="config-tab">
     <PolarisBlockStack gap="400">
-      <PolarisTextField
-        label="Name"
-        required
-        :modelValue="config?.name || ''"
-        @update:modelValue="update('name', $event)"
-        placeholder="e.g. Win-Back Agent"
-      />
+      <PolarisCard>
+        <PolarisCardSection>
+          <PolarisBlockStack gap="400">
+            <PolarisTextField
+              label="Name"
+              required
+              :modelValue="config?.name || ''"
+              @update:modelValue="update('name', $event)"
+              placeholder="e.g. Win-Back Agent"
+            />
+            <PolarisTextField
+              label="Description"
+              :modelValue="config?.description || ''"
+              @update:modelValue="update('description', $event)"
+              placeholder="Describe what this agent does..."
+              multiline
+              :rows="3"
+            />
+          </PolarisBlockStack>
+        </PolarisCardSection>
+      </PolarisCard>
 
-      <PolarisTextField
-        label="Description"
-        :modelValue="config?.description || ''"
-        @update:modelValue="update('description', $event)"
-        placeholder="Describe what this agent does..."
-        multiline
-        :rows="3"
-      />
+      <PolarisCard>
+        <PolarisCardSection>
+          <PolarisBlockStack gap="400">
+            <PolarisSelect
+              label="Objective"
+              required
+              :modelValue="config?.objective || ''"
+              @update:modelValue="update('objective', $event)"
+              :options="objectiveOptions"
+              placeholder="Select objective..."
+              helpText="The primary goal this agent optimizes for"
+            />
+            <PolarisSelect
+              label="Tone"
+              :modelValue="config?.tone || ''"
+              @update:modelValue="update('tone', $event)"
+              :options="toneOptions"
+              placeholder="Select tone..."
+              helpText="Communication style the AI uses when crafting messages"
+            />
+          </PolarisBlockStack>
+        </PolarisCardSection>
+      </PolarisCard>
 
-      <PolarisSelect
-        label="Objective"
-        required
-        :modelValue="config?.objective || ''"
-        @update:modelValue="update('objective', $event)"
-        :options="objectiveOptions"
-        placeholder="Select objective..."
-        helpText="The primary goal this agent optimizes for"
-      />
-
-      <PolarisSelect
-        label="Tone"
-        :modelValue="config?.tone || ''"
-        @update:modelValue="update('tone', $event)"
-        :options="toneOptions"
-        placeholder="Select tone..."
-        helpText="Communication style the AI uses when crafting messages"
-      />
-
-      <PolarisTextField
-        label="Context Hint"
-        :modelValue="config?.context_hint || ''"
-        @update:modelValue="update('context_hint', $event)"
-        placeholder="e.g. These are lapsed VIP customers who haven't purchased in 90 days"
-        multiline
-        :rows="3"
-        helpText="Give the AI extra context about the audience or campaign to improve its decisions"
-      />
-
-      <PolarisTextField
-        label="Max Actions Per Execution"
-        type="number"
-        :modelValue="config?.max_actions_per_execution ?? 3"
-        @update:modelValue="update('max_actions_per_execution', parseInt($event) || 1)"
-        helpText="Maximum number of actions the agent can take per user per execution cycle"
-        :min="1"
-        :max="20"
-      />
+      <PolarisCard>
+        <PolarisCardSection>
+          <PolarisBlockStack gap="400">
+            <PolarisTextField
+              label="Context Hint"
+              :modelValue="config?.context_hint || ''"
+              @update:modelValue="update('context_hint', $event)"
+              placeholder="e.g. These are lapsed VIP customers who haven't purchased in 90 days"
+              multiline
+              :rows="3"
+              helpText="Give the AI extra context about the audience or campaign to improve its decisions"
+            />
+            <PolarisTextField
+              label="Max Actions Per Execution"
+              type="number"
+              :modelValue="config?.max_actions_per_execution ?? 3"
+              @update:modelValue="update('max_actions_per_execution', parseInt($event) || 1)"
+              helpText="Maximum number of actions the agent can take per user per execution cycle"
+              :min="1"
+              :max="20"
+            />
+          </PolarisBlockStack>
+        </PolarisCardSection>
+      </PolarisCard>
     </PolarisBlockStack>
   </div>
 </template>
@@ -63,11 +78,12 @@
 <script>
 import {
   PolarisTextField, PolarisSelect, PolarisBlockStack,
+  PolarisCard, PolarisCardSection,
 } from 'polaris-weweb-styles/components';
 
 export default {
   name: 'ConfigTab',
-  components: { PolarisTextField, PolarisSelect, PolarisBlockStack },
+  components: { PolarisTextField, PolarisSelect, PolarisBlockStack, PolarisCard, PolarisCardSection },
   props: {
     config: { type: Object, default: () => ({}) },
   },

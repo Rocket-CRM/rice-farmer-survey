@@ -548,13 +548,19 @@ export default {
   font-family: var(--p-font-family-sans);
   background: var(--agent-builder-bg, var(--p-color-bg));
   overflow: hidden;
+
+  input[type="radio"],
+  input[type="checkbox"] {
+    accent-color: var(--p-color-bg-fill-brand, #2C6ECB);
+  }
 }
 
 // ═══ LIST VIEW ═══
 .list-view {
   flex: 1;
-  padding: var(--p-space-600);
+  padding: var(--p-space-600) var(--p-space-500);
   overflow-y: auto;
+  background: transparent;
 }
 
 // ═══ EDITOR VIEW ═══
@@ -571,7 +577,8 @@ export default {
   justify-content: space-between;
   padding: var(--p-space-300) var(--p-space-600);
   background: var(--p-color-bg-surface);
-  border-bottom: var(--p-border-width-025) solid var(--p-color-border);
+  border-bottom: 1px solid var(--p-color-border);
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.04);
   flex-shrink: 0;
 }
 
@@ -579,7 +586,7 @@ export default {
   display: flex;
   gap: 0;
   background: var(--p-color-bg-surface);
-  border-bottom: var(--p-border-width-025) solid var(--p-color-border);
+  border-bottom: 1px solid var(--p-color-border);
   padding: 0 var(--p-space-600);
   flex-shrink: 0;
   overflow-x: auto;
@@ -625,11 +632,18 @@ export default {
   flex: 1;
   overflow-y: auto;
   padding: var(--p-space-600);
+  background: var(--p-color-bg-surface-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-space-400);
 }
 
 // Responsive
 @media (max-width: 768px) {
-  .list-view,
+  .list-view {
+    padding: var(--p-space-400);
+  }
+
   .editor-content {
     padding: var(--p-space-400);
   }

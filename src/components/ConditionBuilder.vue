@@ -292,5 +292,11 @@ export default {
   display: flex;
   align-items: flex-end;
   gap: var(--p-space-200);
+
+  :deep(select),
+  :deep(input:not([type="checkbox"]):not([type="radio"])) {
+    height: 36px;
+    box-sizing: border-box;
+  }
 }
 </style>

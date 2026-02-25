@@ -1,36 +1,36 @@
 <template>
   <div class="agent-list">
-    <!-- Header -->
     <PolarisInline gap="200" blockAlign="center" align="space-between">
       <PolarisText variant="headingLg">AI Agents</PolarisText>
       <PolarisButton variant="primary" icon="plus" @click="$emit('create')">New Agent</PolarisButton>
     </PolarisInline>
 
-    <!-- Loading -->
-    <div v-if="loading" class="agent-list__loading">
-      <span class="spinner"></span>
-      <PolarisText variant="bodyMd" color="subdued">Loading agents...</PolarisText>
+    <div v-if="loading" class="agent-list__card-wrapper">
+      <div class="agent-list__loading">
+        <span class="spinner"></span>
+        <PolarisText variant="bodyMd" color="subdued">Loading agents...</PolarisText>
+      </div>
     </div>
 
-    <!-- Empty -->
-    <PolarisEmptyState v-else-if="!agents?.length" icon="🤖" heading="No agents yet">
-      Create your first AI agent to start automating marketing decisions.
-      <template #actions>
-        <PolarisButton variant="primary" @click="$emit('create')">Create Agent</PolarisButton>
-      </template>
-    </PolarisEmptyState>
+    <div v-else-if="!agents?.length" class="agent-list__card-wrapper">
+      <PolarisEmptyState icon="🤖" heading="No agents yet">
+        Create your first AI agent to start automating marketing decisions.
+        <template #actions>
+          <PolarisButton variant="primary" @click="$emit('create')">Create Agent</PolarisButton>
+        </template>
+      </PolarisEmptyState>
+    </div>
 
-    <!-- Table -->
     <div v-else class="agent-table-wrapper">
       <table class="agent-table">
         <thead>
           <tr>
-            <th>Name</th>
+            <th class="agent-table__th--first">Name</th>
             <th>Objective</th>
             <th class="agent-table__center">Actions</th>
             <th class="agent-table__center">Outcomes</th>
             <th>Status</th>
-            <th>Created</th>
+            <th class="agent-table__th--last">Created</th>
           </tr>
         </thead>
         <tbody>
@@ -105,6 +105,15 @@ export default {
   display: flex;
   flex-direction: column;
   gap: var(--p-space-400);
+  background: transparent;
+  padding: 0 var(--p-space-500);
+}
+
+.agent-list__card-wrapper {
+  background: var(--p-color-bg-surface);
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-300);
+  overflow: hidden;
 }
 
 .agent-list__loading {
@@ -130,9 +139,9 @@ export default {
 
 .agent-table-wrapper {
   overflow-x: auto;
-  border: var(--p-border-width-025) solid var(--p-color-border);
-  border-radius: var(--p-border-radius-200);
   background: var(--p-color-bg-surface);
+  border: 1px solid var(--p-color-border);
+  border-radius: var(--p-border-radius-300);
 }
 
 .agent-table {
@@ -148,14 +157,22 @@ export default {
     color: var(--p-color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border-bottom: var(--p-border-width-025) solid var(--p-color-border);
+    border-bottom: 1px solid var(--p-color-border);
     background: var(--p-color-bg-surface-secondary);
     white-space: nowrap;
   }
 
+  &__th--first {
+    border-top-left-radius: var(--p-border-radius-300);
+  }
+
+  &__th--last {
+    border-top-right-radius: var(--p-border-radius-300);
+  }
+
   td {
     padding: var(--p-space-300) var(--p-space-400);
-    border-bottom: var(--p-border-width-025) solid var(--p-color-border);
+    border-bottom: 1px solid var(--p-color-border);
     color: var(--p-color-text);
     vertical-align: middle;
   }

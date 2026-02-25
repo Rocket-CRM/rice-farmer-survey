@@ -169,6 +169,11 @@ export default {
   display: flex;
   flex-direction: column;
   gap: var(--p-space-400);
+
+  input[type="radio"],
+  input[type="checkbox"] {
+    accent-color: var(--p-color-bg-fill-brand, #2C6ECB);
+  }
 }
 
 .actions-list {
