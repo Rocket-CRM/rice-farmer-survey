@@ -20,10 +20,11 @@
       <PolarisCard>
       <PolarisConfigSection icon="🌙" title="Quiet Hours" subtitle="Suppress actions during off-hours">
         <PolarisBlockStack gap="300">
-          <PolarisCheckbox
+          <PolarisCheckboxCard
             :modelValue="quietHours?.enabled || false"
             @update:modelValue="updateQuietHours('enabled', $event)"
             label="Enable quiet hours"
+            description="Suppress all agent actions during the specified time window"
           />
 
           <template v-if="quietHours?.enabled">
@@ -128,14 +129,14 @@
 <script>
 import { computed } from 'vue';
 import {
-  PolarisTextField, PolarisSelect, PolarisButton, PolarisCheckbox,
+  PolarisTextField, PolarisSelect, PolarisButton, PolarisCheckboxCard,
   PolarisBlockStack, PolarisInline, PolarisConfigSection, PolarisCard,
 } from 'polaris-weweb-styles/components';
 
 export default {
   name: 'SchedulingTab',
   components: {
-    PolarisTextField, PolarisSelect, PolarisButton, PolarisCheckbox,
+    PolarisTextField, PolarisSelect, PolarisButton, PolarisCheckboxCard,
     PolarisBlockStack, PolarisInline, PolarisConfigSection, PolarisCard,
   },
   props: {

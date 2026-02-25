@@ -17,12 +17,12 @@
         v-for="(outcome, idx) in outcomes"
         :key="outcome?.id || outcome?._tempId || idx"
       >
-        <PolarisCardSection>
-          <PolarisInline gap="200" blockAlign="start" align="space-between">
-            <PolarisText variant="headingSm">Outcome {{ idx + 1 }}</PolarisText>
+        <PolarisCardHeader :title="`Outcome ${idx + 1}`">
+          <template #action>
             <PolarisButton variant="plain" icon="delete" iconOnly @click="removeOutcome(idx)" />
-          </PolarisInline>
-
+          </template>
+        </PolarisCardHeader>
+        <PolarisCardSection>
           <PolarisBlockStack gap="400">
             <PolarisTextField
               label="Name"
@@ -84,8 +84,8 @@
 import { computed } from 'vue';
 import {
   PolarisTextField, PolarisSelect, PolarisButton, PolarisText,
-  PolarisCard, PolarisCardSection, PolarisBlockStack, PolarisInline,
-  PolarisEmptyState, PolarisConfigSection,
+  PolarisCard, PolarisCardHeader, PolarisCardSection, PolarisBlockStack,
+  PolarisInline, PolarisEmptyState, PolarisConfigSection,
 } from 'polaris-weweb-styles/components';
 import ClassificationPicker from './ClassificationPicker.vue';
 import ConditionBuilder from './ConditionBuilder.vue';
@@ -96,8 +96,8 @@ export default {
   name: 'OutcomesTab',
   components: {
     PolarisTextField, PolarisSelect, PolarisButton, PolarisText,
-    PolarisCard, PolarisCardSection, PolarisBlockStack, PolarisInline,
-    PolarisEmptyState, PolarisConfigSection,
+    PolarisCard, PolarisCardHeader, PolarisCardSection, PolarisBlockStack,
+    PolarisInline, PolarisEmptyState, PolarisConfigSection,
     ClassificationPicker, ConditionBuilder,
   },
   props: {

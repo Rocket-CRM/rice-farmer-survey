@@ -3,7 +3,8 @@
     <PolarisBlockStack gap="400">
       <!-- Section: Action Configuration -->
       <PolarisCard>
-      <PolarisConfigSection icon="⚡" title="Action Configuration" subtitle="Define the action type and its parameters">
+        <PolarisCardHeader title="Action Configuration" description="Define the action type and its parameters" />
+        <PolarisCardSection>
         <PolarisBlockStack gap="400">
           <PolarisTextField
             label="Action Name"
@@ -113,7 +114,7 @@
             </div>
           </template>
         </PolarisBlockStack>
-      </PolarisConfigSection>
+        </PolarisCardSection>
       </PolarisCard>
 
       <!-- Section: Guardrails (only if action type has them) -->
@@ -206,7 +207,7 @@ import { computed } from 'vue';
 import {
   PolarisTextField, PolarisSelect, PolarisButton,
   PolarisBlockStack, PolarisInline, PolarisText, PolarisConfigSection,
-  PolarisCard,
+  PolarisCard, PolarisCardHeader, PolarisCardSection,
 } from 'polaris-weweb-styles/components';
 import ConditionBuilder from './ConditionBuilder.vue';
 
@@ -215,7 +216,7 @@ export default {
   components: {
     PolarisTextField, PolarisSelect, PolarisButton,
     PolarisBlockStack, PolarisInline, PolarisText, PolarisConfigSection,
-    PolarisCard, ConditionBuilder,
+    PolarisCard, PolarisCardHeader, PolarisCardSection, ConditionBuilder,
   },
   props: {
     action: { type: Object, default: () => ({}) },
