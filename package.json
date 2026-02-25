@@ -6,7 +6,7 @@
     "serve": "weweb serve"
   },
   "dependencies": {
-    "polaris-weweb-styles": "^2.0.0"
+    "polaris-weweb-styles": "^2.1.0"
   },
   "devDependencies": {
     "@weweb/cli": "latest"

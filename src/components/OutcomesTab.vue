@@ -57,20 +57,22 @@
             />
 
             <!-- Event Filter (collapsible) -->
-            <PolarisConfigSection
-              icon="🔍"
-              title="Event Filter"
-              subtitle="Optional — only count events matching these criteria"
-              collapsible
-              :defaultOpen="hasEventFilter(outcome)"
-            >
-              <ConditionBuilder
-                :modelValue="outcome?.event_filter || { match: 'all', groups: [] }"
-                @update:modelValue="updateOutcome(idx, 'event_filter', $event)"
-                :collections="collections"
-                :filterableFields="getFilterableFields(outcome?.event_type)"
-              />
-            </PolarisConfigSection>
+            <PolarisCard>
+              <PolarisConfigSection
+                icon="🔍"
+                title="Event Filter"
+                subtitle="Optional — only count events matching these criteria"
+                collapsible
+                :defaultOpen="hasEventFilter(outcome)"
+              >
+                <ConditionBuilder
+                  :modelValue="outcome?.event_filter || { match: 'all', groups: [] }"
+                  @update:modelValue="updateOutcome(idx, 'event_filter', $event)"
+                  :collections="collections"
+                  :filterableFields="getFilterableFields(outcome?.event_type)"
+                />
+              </PolarisConfigSection>
+            </PolarisCard>
           </PolarisBlockStack>
         </PolarisCardSection>
       </PolarisCard>

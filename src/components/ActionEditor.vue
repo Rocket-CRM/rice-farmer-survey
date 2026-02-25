@@ -1,7 +1,8 @@
 <template>
   <div class="action-editor">
-    <PolarisBlockStack gap="600">
+    <PolarisBlockStack gap="400">
       <!-- Section: Action Configuration -->
+      <PolarisCard>
       <PolarisConfigSection icon="⚡" title="Action Configuration" subtitle="Define the action type and its parameters">
         <PolarisBlockStack gap="400">
           <PolarisTextField
@@ -113,10 +114,11 @@
           </template>
         </PolarisBlockStack>
       </PolarisConfigSection>
+      </PolarisCard>
 
       <!-- Section: Guardrails (only if action type has them) -->
+      <PolarisCard v-if="currentGuardrails?.length">
       <PolarisConfigSection
-        v-if="currentGuardrails?.length"
         icon="🛡️"
         title="Action Guardrails"
         subtitle="Limits specific to this action"
@@ -177,8 +179,10 @@
           </div>
         </PolarisBlockStack>
       </PolarisConfigSection>
+      </PolarisCard>
 
       <!-- Section: Eligibility Conditions -->
+      <PolarisCard>
       <PolarisConfigSection
         icon="🎯"
         title="Eligibility"
@@ -192,6 +196,7 @@
           :collections="collections"
         />
       </PolarisConfigSection>
+      </PolarisCard>
     </PolarisBlockStack>
   </div>
 </template>
@@ -201,6 +206,7 @@ import { computed } from 'vue';
 import {
   PolarisTextField, PolarisSelect, PolarisButton,
   PolarisBlockStack, PolarisInline, PolarisText, PolarisConfigSection,
+  PolarisCard,
 } from 'polaris-weweb-styles/components';
 import ConditionBuilder from './ConditionBuilder.vue';
 
@@ -209,7 +215,7 @@ export default {
   components: {
     PolarisTextField, PolarisSelect, PolarisButton,
     PolarisBlockStack, PolarisInline, PolarisText, PolarisConfigSection,
-    ConditionBuilder,
+    PolarisCard, ConditionBuilder,
   },
   props: {
     action: { type: Object, default: () => ({}) },

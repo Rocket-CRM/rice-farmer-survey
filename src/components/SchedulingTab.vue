@@ -1,7 +1,8 @@
 <template>
   <div class="scheduling-tab">
-    <PolarisBlockStack gap="600">
+    <PolarisBlockStack gap="400">
       <!-- Cooldown -->
+      <PolarisCard>
       <PolarisConfigSection icon="⏱️" title="Cooldown" subtitle="Minimum gap between any action for the same user">
         <PolarisTextField
           label="Cooldown Hours"
@@ -13,8 +14,10 @@
           :min="0"
         />
       </PolarisConfigSection>
+      </PolarisCard>
 
       <!-- Quiet Hours -->
+      <PolarisCard>
       <PolarisConfigSection icon="🌙" title="Quiet Hours" subtitle="Suppress actions during off-hours">
         <PolarisBlockStack gap="300">
           <PolarisCheckbox
@@ -52,8 +55,10 @@
           </template>
         </PolarisBlockStack>
       </PolarisConfigSection>
+      </PolarisCard>
 
       <!-- Blackout Dates -->
+      <PolarisCard>
       <PolarisConfigSection icon="📅" title="Blackout Dates" subtitle="Days when the agent will not execute any actions">
         <PolarisBlockStack gap="200">
           <div v-for="(date, idx) in blackoutDates" :key="idx" class="blackout-row">
@@ -69,8 +74,10 @@
           <PolarisButton variant="outline" fullWidth @click="addBlackoutDate">+ Add Date</PolarisButton>
         </PolarisBlockStack>
       </PolarisConfigSection>
+      </PolarisCard>
 
       <!-- Constraints -->
+      <PolarisCard>
       <PolarisConfigSection icon="🛡️" title="Agent-Level Guardrails" subtitle="Limits that apply across ALL actions in this agent">
         <PolarisBlockStack gap="200">
           <div v-for="(rule, idx) in constraints" :key="idx" class="constraint-row">
@@ -113,6 +120,7 @@
           <PolarisButton variant="outline" fullWidth @click="addConstraint">+ Add Constraint</PolarisButton>
         </PolarisBlockStack>
       </PolarisConfigSection>
+      </PolarisCard>
     </PolarisBlockStack>
   </div>
 </template>
@@ -121,14 +129,14 @@
 import { computed } from 'vue';
 import {
   PolarisTextField, PolarisSelect, PolarisButton, PolarisCheckbox,
-  PolarisBlockStack, PolarisInline, PolarisConfigSection,
+  PolarisBlockStack, PolarisInline, PolarisConfigSection, PolarisCard,
 } from 'polaris-weweb-styles/components';
 
 export default {
   name: 'SchedulingTab',
   components: {
     PolarisTextField, PolarisSelect, PolarisButton, PolarisCheckbox,
-    PolarisBlockStack, PolarisInline, PolarisConfigSection,
+    PolarisBlockStack, PolarisInline, PolarisConfigSection, PolarisCard,
   },
   props: {
     config: { type: Object, default: () => ({}) },
