@@ -277,12 +277,14 @@ export default {
 .action-editor-panel {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  margin: calc(-1 * var(--p-space-400));
+  gap: var(--p-space-400);
+  margin: calc(-1 * var(--p-space-600));
+  min-height: 100%;
 
   &__header {
-    padding: var(--p-space-400);
-    border-bottom: var(--p-border-width-025) solid var(--p-color-border);
+    padding: var(--p-space-300) var(--p-space-600);
+    border-bottom: 1px solid var(--p-color-border);
+    box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.04);
     background: var(--p-color-bg-surface);
     position: sticky;
     top: 0;
@@ -290,8 +292,7 @@ export default {
   }
 
   &__body {
-    padding: var(--p-space-400);
-    overflow-y: auto;
+    padding: 0 var(--p-space-600) var(--p-space-600);
   }
 }
 </style>
