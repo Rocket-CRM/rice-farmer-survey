@@ -261,12 +261,12 @@ export default {
         ...props.action,
         action_type: newType,
         variable_config: {},
-        guardrail_config: {},
+        action_constraints: {},
       });
     };
 
     const variableConfig = computed(() => props.action?.variable_config || {});
-    const guardrailConfig = computed(() => props.action?.guardrail_config || {});
+    const guardrailConfig = computed(() => props.action?.action_constraints || {});
 
     const getVariableValue = (name, subField = null) => {
       const val = variableConfig.value?.[name];
@@ -309,7 +309,7 @@ export default {
     const getGuardrailValue = (name) => guardrailConfig.value?.[name];
 
     const setGuardrailValue = (name, value) => {
-      update('guardrail_config', { ...guardrailConfig.value, [name]: value });
+      update('action_constraints', { ...guardrailConfig.value, [name]: value });
     };
 
     const getEntityOptions = (entityTable) => {

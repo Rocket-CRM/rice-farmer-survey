@@ -107,6 +107,10 @@ const EMPTY_FORM = {
   blackout_dates: [],
   constraints: [],
   is_active: false,
+  max_deliberation_cycles: 3,
+  default_wait_duration: '2d',
+  max_wait_duration: '7d',
+  deliberation_timeout: '14d',
 };
 
 export default {
@@ -324,6 +328,10 @@ export default {
           blackout_dates: full.agent.blackout_dates || [],
           constraints: full.agent.constraints || [],
           is_active: full.agent.is_active || false,
+          max_deliberation_cycles: full.agent.max_deliberation_cycles ?? 3,
+          default_wait_duration: full.agent.default_wait_duration || '2d',
+          max_wait_duration: full.agent.max_wait_duration || '7d',
+          deliberation_timeout: full.agent.deliberation_timeout || '14d',
         };
         agentActions.value = full.actions;
         agentOutcomes.value = full.outcomes;
@@ -378,56 +386,65 @@ export default {
 
       isSaving.value = true;
       try {
-        const cleanAction = (action, idx) => {
+        const agentPayload = {
+          ...(selectedAgentId.value ? { id: selectedAgentId.value } : {}),
+          name: form.value.name,
+          description: form.value.description || null,
+          objective: form.value.objective || null,
+          tone: form.value.tone || null,
+          context_hint: form.value.context_hint || null,
+          max_actions_per_execution: form.value.max_actions_per_execution || 3,
+          constraints: form.value.constraints?.length ? form.value.constraints : [],
+          cooldown_hours: form.value.cooldown_hours || null,
+          quiet_hours: form.value.quiet_hours || null,
+          blackout_dates: form.value.blackout_dates?.filter(d => d) || [],
+          max_deliberation_cycles: form.value.max_deliberation_cycles ?? 3,
+          default_wait_duration: form.value.default_wait_duration || '2d',
+          max_wait_duration: form.value.max_wait_duration || '7d',
+          deliberation_timeout: form.value.deliberation_timeout || '14d',
+        };
+
+        const actionsPayload = agentActions.value.map((action, idx) => {
           const out = {
             action_type: action.action_type,
             name: action.name || null,
             is_enabled: action.is_enabled !== false,
             variable_config: action.variable_config || {},
-            guardrail_config: action.guardrail_config || {},
+            action_constraints: action.action_constraints || {},
             eligibility_conditions: action.eligibility_conditions || null,
             sort_order: idx + 1,
           };
           if (action.id && !action._tempId) out.id = action.id;
           return out;
-        };
+        });
 
-        const cleanOutcome = (outcome, idx) => {
+        const outcomesPayload = agentOutcomes.value.map((outcome, i) => {
           const out = {
-            name: outcome.name || null,
+            ...(outcome.id && !outcome._tempId ? { id: outcome.id } : {}),
             event_type: outcome.event_type || null,
             event_filter: outcome.event_filter || null,
             classification: outcome.classification || 'good',
             weight_column: outcome.weight_column || null,
-            sort_order: idx + 1,
+            attribution_window_hours: outcome.attribution_window_hours || 168,
+            counting_method: outcome.counting_method || 'cumulative',
+            target_conversion_rate: outcome.is_primary ? (outcome.target_conversion_rate || null) : null,
+            is_primary: outcome.is_primary || false,
+            sort_order: i + 1,
           };
-          if (outcome.id && !outcome._tempId) out.id = outcome.id;
           return out;
-        };
+        });
 
-        const payload = {
-          p_agent_id: selectedAgentId.value || null,
-          p_name: form.value.name,
-          p_description: form.value.description || null,
-          p_objective: form.value.objective || null,
-          p_tone: form.value.tone || null,
-          p_context_hint: form.value.context_hint || null,
-          p_max_actions_per_execution: form.value.max_actions_per_execution || 3,
-          p_constraints: form.value.constraints?.length ? form.value.constraints : [],
-          p_cooldown_hours: form.value.cooldown_hours || null,
-          p_quiet_hours: form.value.quiet_hours || null,
-          p_blackout_dates: form.value.blackout_dates?.filter(d => d) || [],
-          p_actions: agentActions.value.map(cleanAction),
-          p_outcomes: agentOutcomes.value.map(cleanOutcome),
-        };
-
-        const result = await rpc('bff_upsert_agent_with_children', payload);
+        const result = await rpc('bff_upsert_agent_with_children', {
+          p_agent: agentPayload,
+          p_actions: actionsPayload,
+          p_outcomes: outcomesPayload,
+        });
 
         if (!result?.success) {
           throw new Error(result?.description || result?.title || 'BFF upsert failed');
         }
 
-        const agentId = result?.data?.agent_id || selectedAgentId.value;
+        const agentId = result?.data?.id || result?.data?.agent_id || selectedAgentId.value;
         if (!agentId) throw new Error('No agent ID returned from save');
         selectedAgentId.value = agentId;
 

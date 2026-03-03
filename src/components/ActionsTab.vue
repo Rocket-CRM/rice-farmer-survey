@@ -107,7 +107,7 @@ export default {
         name: '',
         is_enabled: true,
         variable_config: {},
-        guardrail_config: {},
+        action_constraints: {},
         eligibility_conditions: { match: 'all', groups: [] },
         sort_order: (props.actions?.length || 0) + 1,
       };

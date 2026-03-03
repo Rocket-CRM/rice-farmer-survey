@@ -71,6 +71,50 @@
           </PolarisBlockStack>
         </PolarisCardSection>
       </PolarisCard>
+
+      <!-- Deliberation Settings -->
+      <PolarisCard>
+        <PolarisConfigSection
+          icon="🔄"
+          title="Deliberation Settings"
+          subtitle="Control how many observe-wait cycles the agent can perform"
+          collapsible
+          :defaultOpen="false"
+        >
+          <PolarisBlockStack gap="400">
+            <PolarisTextField
+              label="Max Cycles"
+              type="number"
+              :modelValue="config?.max_deliberation_cycles ?? 3"
+              @update:modelValue="update('max_deliberation_cycles', parseInt($event) || 1)"
+              helpText="Agent will observe and wait up to this many times before stopping"
+              :min="1"
+              :max="10"
+            />
+            <PolarisTextField
+              label="Default Wait"
+              :modelValue="config?.default_wait_duration || '2d'"
+              @update:modelValue="update('default_wait_duration', $event)"
+              helpText="How long to wait between cycles if AI doesn't specify (e.g. 2d, 12h)"
+              placeholder="e.g. 2d, 12h"
+            />
+            <PolarisTextField
+              label="Max Wait"
+              :modelValue="config?.max_wait_duration || '7d'"
+              @update:modelValue="update('max_wait_duration', $event)"
+              helpText="Cap on any single wait the AI can request"
+              placeholder="e.g. 7d"
+            />
+            <PolarisTextField
+              label="Total Timeout"
+              :modelValue="config?.deliberation_timeout || '14d'"
+              @update:modelValue="update('deliberation_timeout', $event)"
+              helpText="Maximum total time from first cycle to final decision"
+              placeholder="e.g. 14d"
+            />
+          </PolarisBlockStack>
+        </PolarisConfigSection>
+      </PolarisCard>
     </PolarisBlockStack>
   </div>
 </template>
@@ -78,12 +122,15 @@
 <script>
 import {
   PolarisTextField, PolarisSelect, PolarisBlockStack,
-  PolarisCard, PolarisCardSection,
+  PolarisCard, PolarisCardSection, PolarisConfigSection,
 } from 'polaris-weweb-styles/components';
 
 export default {
   name: 'ConfigTab',
-  components: { PolarisTextField, PolarisSelect, PolarisBlockStack, PolarisCard, PolarisCardSection },
+  components: {
+    PolarisTextField, PolarisSelect, PolarisBlockStack,
+    PolarisCard, PolarisCardSection, PolarisConfigSection,
+  },
   props: {
     config: { type: Object, default: () => ({}) },
   },
