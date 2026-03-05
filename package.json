@@ -1,12 +1,13 @@
 {
-  "name": "agent-builder",
+  "name": "syngenta-rice-survey-component",
   "version": "0.0.1",
   "scripts": {
     "build": "weweb build",
     "serve": "weweb serve"
   },
   "dependencies": {
-    "polaris-weweb-styles": "^2.1.0"
+    "polaris-weweb-styles": "^2.1.0",
+    "@supabase/supabase-js": "^2.49.1"
   },
   "devDependencies": {
     "@weweb/cli": "latest"

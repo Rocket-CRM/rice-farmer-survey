@@ -1,0 +1,216 @@
+export const FORM_ID = '622bed39-c4df-4d5d-9c4b-2ac4873104fa'
+export const FORM_CODE = 'RICE_BIGGROWER_2026'
+export const MERCHANT_ID = '8f67aa08-dfce-454d-bfb1-effc4ee45f1f'
+export const USER_PROFILE_FORM_ID = 'a0000000-0000-0000-0000-000000000001'
+export const CROP_FIELD_ID = 'c0000000-0000-0000-0000-000000000001'
+export const AREA_FIELD_ID = 'c0000000-0000-0000-0000-000000000002'
+
+export const FIELDS = {
+  a1_age:              { id: '83b257a7-5398-4ab0-af0a-5ff729d8eaaa', type: 'number', required: true, min: 15, max: 99 },
+  a2_rice_area_rai:    { id: '30999277-192e-41d8-8ab9-a9f0a6863f05', type: 'number', required: true, min: 1 },
+  a3_harvest_month:    { id: '7255950e-19d0-41fb-b009-09e842ccd3ae', type: 'single_select', required: true },
+  a4_farming_years:    { id: 'e6feaad3-5e94-4c90-833d-12896f7a4c9f', type: 'number', required: true, min: 1 },
+  a5_seasons_per_year: { id: '34311768-e671-4236-8b5d-8647ed50b36f', type: 'number', required: true, min: 1, max: 4 },
+  a6_rice_varieties:   { id: '428b2d8c-8041-4251-ada5-f68ff1597d55', type: 'object', required: true },
+  a7_yield_per_rai:    { id: '1e963188-8f41-45c7-a355-5ab8be9e1c08', type: 'number', required: true, min: 0 },
+  a8_selling_price:    { id: '1830157d-786c-45fe-a3a4-e7521ae1d1db', type: 'number', required: true, min: 0 },
+  a9_breakeven_price:  { id: 'dde52e35-8406-4a39-acc3-c40cbbb0f6c5', type: 'number', required: true, min: 0 },
+  b_weed_assessment:   { id: '1e0aedb8-074d-4fe8-8dd5-bd4edc4c8a4d', type: 'object', required: false },
+  c_insect_assessment: { id: '29c2c930-fe42-423d-9789-ded2574b7605', type: 'object', required: false },
+  d_disease_assessment:{ id: '2b6f0034-13c5-4ea9-933c-eae20f7018f2', type: 'object', required: false },
+  e1_e5_spray_applications: { id: 'c679d268-48f7-441b-a295-b3fb15baf642', type: 'object', required: false },
+  e6_total_cost:       { id: 'a4eaca64-d961-4835-91ac-27ba68c50f97', type: 'number', required: false, min: 0 },
+  e6_1_herbicide_pct:  { id: 'ceaef267-3ea7-4084-bdc2-55907d7ab626', type: 'number', required: false, min: 0, max: 100 },
+  e6_2_insecticide_pct:{ id: 'e0c1e3d6-74ab-43fa-b629-4d55a5f0c362', type: 'number', required: false, min: 0, max: 100 },
+  e6_3_fungicide_pct:  { id: '9d13b1de-3c8e-4668-a031-5e0251d1a9fe', type: 'number', required: false, min: 0, max: 100 },
+  e6_4_hormone_pct:    { id: '1c735204-25c1-477a-afa9-31b21fe1fcfb', type: 'number', required: false, min: 0, max: 100 },
+  e7_investment_plan:  { id: 'a86fc9ec-0d11-4281-b58b-980da42488d7', type: 'single_select', required: true },
+}
+
+export const MONTH_OPTIONS = [
+  { value: '1', label: 'มกราคม' },
+  { value: '2', label: 'กุมภาพันธ์' },
+  { value: '3', label: 'มีนาคม' },
+  { value: '4', label: 'เมษายน' },
+  { value: '5', label: 'พฤษภาคม' },
+  { value: '6', label: 'มิถุนายน' },
+  { value: '7', label: 'กรกฎาคม' },
+  { value: '8', label: 'สิงหาคม' },
+  { value: '9', label: 'กันยายน' },
+  { value: '10', label: 'ตุลาคม' },
+  { value: '11', label: 'พฤศจิกายน' },
+  { value: '12', label: 'ธันวาคม' },
+]
+
+export const WEED_OPTIONS = [
+  { code: 'weed_01', label: 'หญ้าข้าวนก' },
+  { code: 'weed_02', label: 'หญ้าพุ่มพวง' },
+  { code: 'weed_03', label: 'หญ้าคอมมิวนิสต์' },
+  { code: 'weed_04', label: 'หญ้าข้าวนกสีชมพ' },
+  { code: 'weed_05', label: 'หญ้าข้าวปล้อง' },
+  { code: 'weed_06', label: 'หญ้านก' },
+  { code: 'weed_07', label: 'หญ้าแดง' },
+  { code: 'weed_08', label: 'หญ้ากระดูกไก่' },
+  { code: 'weed_09', label: 'หญ้าก้านธูป' },
+  { code: 'weed_10', label: 'หญ้าสล้าง' },
+  { code: 'weed_11', label: 'หญ้าดอกขาว' },
+  { code: 'weed_12', label: 'หญ้าลิเก' },
+  { code: 'weed_13', label: 'หญ้าไม้กวาด' },
+  { code: 'weed_14', label: 'ผักปอดนา' },
+  { code: 'weed_15', label: 'หญ้าจำปา' },
+  { code: 'weed_16', label: 'ผักพริก' },
+  { code: 'weed_17', label: 'ผักปุ่มปลา' },
+  { code: 'weed_18', label: 'หนวดปลาดุก' },
+  { code: 'weed_19', label: 'หญ้าหนวดแมว' },
+  { code: 'weed_20', label: 'หญ้าไข่กบ' },
+  { code: 'weed_21', label: 'หญ้าไข่เขียด' },
+  { code: 'weed_22', label: 'กกขนาก' },
+  { code: 'weed_23', label: 'หญ้าดอกต่อ' },
+  { code: 'weed_24', label: 'ผือน้อย' },
+  { code: 'weed_25', label: 'กกทราย' },
+  { code: 'weed_26', label: 'กกแดง' },
+  { code: 'weed_27', label: 'หญ้ารังกา' },
+  { code: 'weed_28', label: 'เซ่งใบมน' },
+  { code: 'weed_29', label: 'เทียนนา' },
+  { code: 'weed_30', label: 'โสนคางคก' },
+  { code: 'weed_31', label: 'หญ้าชะกาดน้ำเค็ม' },
+  { code: 'weed_32', label: 'หญ้าชันกาศ' },
+  { code: 'weed_33', label: 'หญ้ากุศลา' },
+  { code: 'weed_34', label: 'ปอวัชพืช' },
+  { code: 'weed_35', label: 'สะอึก' },
+  { code: 'weed_36', label: 'โสนหางไก่' },
+  { code: 'weed_37', label: 'ข้าวดีด' },
+  { code: 'weed_other_1', label: 'อื่นๆ (ระบุ) 1', hasCustomInput: true },
+  { code: 'weed_other_2', label: 'อื่นๆ (ระบุ) 2', hasCustomInput: true },
+]
+
+export const INSECT_OPTIONS = [
+  { code: 'pest_01', label: 'บั่ว' },
+  { code: 'pest_02', label: 'เพลี้ยกระโดดสีน้ำตาล' },
+  { code: 'pest_03', label: 'เพลี้ยไฟ' },
+  { code: 'pest_04', label: 'แมลงสิง' },
+  { code: 'pest_05', label: 'หนอนกอข้าว' },
+  { code: 'pest_06', label: 'หนอนห่อใบข้าว' },
+  { code: 'pest_07', label: 'แมลงดำหนาม' },
+  { code: 'pest_other_1', label: 'อื่นๆ (ระบุ) 1', hasCustomInput: true },
+  { code: 'pest_other_2', label: 'อื่นๆ (ระบุ) 2', hasCustomInput: true },
+]
+
+export const DISEASE_OPTIONS = [
+  { code: 'disease_01', label: 'โรคกาบใบเน่า' },
+  { code: 'disease_02', label: 'โรคกาบใบแห้ง' },
+  { code: 'disease_03', label: 'โรคขอบใบแห้ง' },
+  { code: 'disease_04', label: 'โรคดอกกระถิน' },
+  { code: 'disease_05', label: 'โรคใบขีดสีน้ำตาล' },
+  { code: 'disease_06', label: 'โรคใบจุดสีน้ำตาล' },
+  { code: 'disease_07', label: 'โรคเมล็ดด่าง' },
+  { code: 'disease_08', label: 'โรคไหม้' },
+  { code: 'disease_09', label: 'โรคใบขีดโน้มตาล' },
+  { code: 'disease_other_1', label: 'อื่นๆ (ระบุ) 1', hasCustomInput: true },
+  { code: 'disease_other_2', label: 'อื่นๆ (ระบุ) 2', hasCustomInput: true },
+]
+
+export const GROWTH_STAGES = [
+  { value: 1, label: 'ระยะข้าวเล็ก', key: 'small_stage' },
+  { value: 2, label: 'ระยะแตกกอ', key: 'tillering_stage' },
+  { value: 3, label: 'ระยะข้าวท้อง', key: 'booting_stage' },
+  { value: 4, label: 'ระยะสุกแก่/เก็บเกี่ยว', key: 'maturity_stage' },
+]
+
+export const INVESTMENT_OPTIONS = [
+  { value: '1', label: 'ลงทุนเพิ่มขึ้น' },
+  { value: '2', label: 'ลงทุนเท่าเดิม' },
+  { value: '3', label: 'ลงทุนลดลงไม่เกิน 10%' },
+  { value: '4', label: 'ลงทุนลดลง 11% - 20%' },
+  { value: '5', label: 'ลงทุนลดลง 21% - 30%' },
+  { value: '6', label: 'ลงทุนลดลง 31% - 40%' },
+  { value: '7', label: 'ลงทุนลดลง 41% - 50%' },
+  { value: '8', label: 'ลงทุนลดลงมากกว่า 50%' },
+]
+
+export const CROP_OPTIONS = [
+  { value: 'rice', label: 'ข้าว' },
+  { value: 'field_corn', label: 'ข้าวโพดไร่' },
+  { value: 'sweet_corn', label: 'ข้าวโพดหวาน' },
+  { value: 'fruit', label: 'ผลไม้' },
+  { value: 'leafy_vegetables', label: 'ผักกินใบ' },
+  { value: 'fruit_root_vegetables', label: 'ผักให้ผล/หัว' },
+  { value: 'other_field_crops', label: 'พืชไร่อื่นๆ' },
+]
+
+export const SPRAY_TYPE_OPTIONS = [
+  { value: 'herbicide', label: 'ยาหญ้า' },
+  { value: 'insecticide', label: 'ยาแมลง' },
+  { value: 'fungicide', label: 'ยาโรค' },
+  { value: 'hormone', label: 'ฮอร์โมนส์' },
+  { value: 'other', label: 'อื่นๆ' },
+]
+
+export const SURVEY_STEPS = [
+  { id: 1, key: 'section_a', title: 'A) ข้อมูลทั่วไปเกี่ยวกับการปลูกข้าว' },
+  { id: 2, key: 'section_b', title: 'B) คำถามเกี่ยวกับการจัดการวัชพืช' },
+  { id: 3, key: 'section_c', title: 'C) คำถามเกี่ยวกับแมลง/หนอน' },
+  { id: 4, key: 'section_d', title: 'D) คำถามเกี่ยวกับโรค' },
+  { id: 5, key: 'section_e', title: 'E) คำถามเกี่ยวกับการใช้สารอารักขาพืช' },
+  { id: 6, key: 'review', title: 'ตรวจสอบและส่ง' },
+]
+
+export const DAMAGE_LABELS = { low: '1=แทบไม่เสียหาย', high: '5=เสียหายมาก' }
+export const CONTROL_LABELS = { low: '1=ง่ายมาก', high: '5=ยากมาก' }
+
+export function normalizeTel(tel) {
+  let cleaned = (tel || '').replace(/[\s\-]/g, '')
+  if (cleaned.startsWith('0')) cleaned = '+66' + cleaned.substring(1)
+  else if (cleaned.startsWith('66') && !cleaned.startsWith('+66')) cleaned = '+' + cleaned
+  else if (!cleaned.startsWith('+')) cleaned = '+66' + cleaned
+  return cleaned
+}
+
+export function initWeedAssessment() {
+  return {
+    items: WEED_OPTIONS.map(w => ({
+      code: w.code,
+      found: false,
+      custom_name: w.hasCustomInput ? '' : undefined,
+      damage: null,
+      control_difficulty: null,
+    })),
+  }
+}
+
+export function initInsectAssessment() {
+  return {
+    items: INSECT_OPTIONS.map(i => ({
+      code: i.code,
+      found: false,
+      custom_name: i.hasCustomInput ? '' : undefined,
+      stages: [],
+      damage: null,
+      control_difficulty: null,
+    })),
+  }
+}
+
+export function initDiseaseAssessment() {
+  return {
+    items: DISEASE_OPTIONS.map(d => ({
+      code: d.code,
+      found: false,
+      custom_name: d.hasCustomInput ? '' : undefined,
+      stages: [],
+      damage: null,
+      control_difficulty: null,
+    })),
+  }
+}
+
+export function initSprayApplications() {
+  return {
+    stages: {
+      small_stage:     { total_sprays: 0, applications: [] },
+      tillering_stage: { total_sprays: 0, applications: [] },
+      booting_stage:   { total_sprays: 0, applications: [] },
+      maturity_stage:  { total_sprays: 0, applications: [] },
+    },
+  }
+}
