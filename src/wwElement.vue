@@ -546,9 +546,9 @@ export default {
       const key = props.content?.supabaseAnonKey || ''
       const token = props.content?.accessToken || ''
       if (!url || !key) return null
-      return createClient(url, key, {
-        global: { headers: token ? { Authorization: `Bearer ${token}` } : {} },
-      })
+      const headers = { 'x-merchant-id': MERCHANT_ID }
+      if (token) headers.Authorization = `Bearer ${token}`
+      return createClient(url, key, { global: { headers } })
     })
 
     // ─── Internal variables ───
