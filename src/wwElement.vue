@@ -148,8 +148,8 @@
             />
 
             <PolarisInline gap="200">
-              <PolarisButton @click="phase = 'tel_lookup'">ย้อนกลับ</PolarisButton>
-              <PolarisButton variant="primary" @click="validateAndStartSurvey">
+              <PolarisButton :disabled="isCreatingUser" @click="phase = 'tel_lookup'">ย้อนกลับ</PolarisButton>
+              <PolarisButton variant="primary" :loading="isCreatingUser" @click="validateAndCreateUser">
                 ลงทะเบียนและเริ่มสำรวจ
               </PolarisButton>
             </PolarisInline>
@@ -830,13 +830,15 @@ export default {
       debugLog('Survey started')
     }
 
-    function validateAndStartSurvey() {
+    const isCreatingUser = ref(false)
+
+    async function validateAndCreateUser() {
       const errs = {}
       if (!signupData.firstname?.trim()) errs.firstname = 'กรุณากรอกชื่อ'
       if (!signupData.lastname?.trim()) errs.lastname = 'กรุณากรอกนามสกุล'
-      if (!signupData.city?.trim()) errs.city = 'กรุณากรอกจังหวัด'
-      if (!signupData.district?.trim()) errs.district = 'กรุณากรอกอำเภอ'
-      if (!signupData.subdistrict?.trim()) errs.subdistrict = 'กรุณากรอกตำบล'
+      if (!signupData.city?.trim()) errs.city = 'กรุณาเลือกจังหวัด'
+      if (!signupData.district?.trim()) errs.district = 'กรุณาเลือกอำเภอ'
+      if (!signupData.subdistrict?.trim()) errs.subdistrict = 'กรุณาเลือกตำบล'
       if (!signupData.crop?.length) errs.crop = 'กรุณาเลือกพืชที่ปลูกอย่างน้อย 1 ชนิด'
       if (!signupData.area || signupData.area <= 0) errs.area = 'กรุณากรอกพื้นที่'
 
@@ -848,8 +850,78 @@ export default {
         return
       }
 
-      setFarmerNameVar(`${signupData.firstname} ${signupData.lastname}`)
-      startSurvey()
+      isCreatingUser.value = true
+      const normalized = normalizeTel(telInput.value)
+
+      try {
+        const client = supabase.value
+        if (!client) throw new Error('Supabase not configured')
+
+        debugLog('Creating new user account...')
+
+        const { data: newUser, error: userErr } = await client
+          .from('user_accounts')
+          .insert({
+            merchant_id: MERCHANT_ID,
+            tel: normalized,
+            firstname: signupData.firstname,
+            lastname: signupData.lastname,
+            is_signup_form_complete: true,
+          })
+          .select('id')
+          .single()
+
+        if (userErr) throw new Error(`User creation failed: ${userErr.message}`)
+        const farmerId = newUser.id
+        debugLog(`User created: ${farmerId}`)
+
+        const { error: addrErr } = await client
+          .from('user_address')
+          .insert({
+            user_id: farmerId,
+            merchant_id: MERCHANT_ID,
+            city: signupData.city,
+            district: signupData.district,
+            subdistrict: signupData.subdistrict,
+          })
+        if (addrErr) debugLog(`Address insert warning: ${addrErr.message}`)
+        else debugLog('Address saved')
+
+        const { data: profileSub, error: profSubErr } = await client
+          .from('form_submissions')
+          .insert({
+            form_id: USER_PROFILE_FORM_ID,
+            merchant_id: MERCHANT_ID,
+            user_id: farmerId,
+            status: 'completed',
+            source: 'field_interview',
+            submitted_at: new Date().toISOString(),
+            ref_userid: props.content?.userId || null,
+          })
+          .select('id')
+          .single()
+
+        if (!profSubErr && profileSub) {
+          await client.from('form_responses').insert([
+            { submission_id: profileSub.id, field_id: CROP_FIELD_ID, array_value: signupData.crop },
+            { submission_id: profileSub.id, field_id: AREA_FIELD_ID, text_value: String(signupData.area) },
+          ])
+        }
+
+        debugLog('Signup data saved')
+        showNotification('success', 'สร้างบัญชีเกษตรกรเรียบร้อย')
+
+        farmerUser.value = { id: farmerId, firstname: signupData.firstname, lastname: signupData.lastname }
+        setFarmerNameVar(`${signupData.firstname} ${signupData.lastname}`)
+        startSurvey()
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error'
+        debugLog(`Signup ERROR: ${msg}`)
+        showNotification('error', `สร้างบัญชีไม่สำเร็จ: ${msg}`)
+        emit('trigger-event', { name: 'error', event: { message: msg } })
+      } finally {
+        isCreatingUser.value = false
+      }
     }
 
     // ─── Crop toggle ───
@@ -1027,65 +1099,9 @@ export default {
         const client = supabase.value
         if (!client) throw new Error('Supabase not configured')
 
-        let farmerId = farmerUser.value?.id
-        let createdNewUser = false
+        const farmerId = farmerUser.value?.id
+        if (!farmerId) throw new Error('Farmer user not found — please go back and register first')
         const normalized = normalizeTel(telInput.value)
-
-        if (!farmerId) {
-          createdNewUser = true
-          debugLog('Creating new user account...')
-
-          const { data: newUser, error: userErr } = await client
-            .from('user_accounts')
-            .insert({
-              merchant_id: MERCHANT_ID,
-              tel: normalized,
-              firstname: signupData.firstname,
-              lastname: signupData.lastname,
-              is_signup_form_complete: true,
-            })
-            .select('id')
-            .single()
-
-          if (userErr) throw new Error(`User creation failed: ${userErr.message}`)
-          farmerId = newUser.id
-          debugLog(`User created: ${farmerId}`)
-
-          const { error: addrErr } = await client
-            .from('user_address')
-            .insert({
-              user_id: farmerId,
-              merchant_id: MERCHANT_ID,
-              city: signupData.city,
-              district: signupData.district,
-              subdistrict: signupData.subdistrict,
-            })
-          if (addrErr) debugLog(`Address insert warning: ${addrErr.message}`)
-          else debugLog('Address saved')
-
-          const { data: profileSub, error: profSubErr } = await client
-            .from('form_submissions')
-            .insert({
-              form_id: USER_PROFILE_FORM_ID,
-              merchant_id: MERCHANT_ID,
-              user_id: farmerId,
-              status: 'completed',
-              source: 'field_interview',
-              submitted_at: new Date().toISOString(),
-              ref_userid: props.content?.userId || null,
-            })
-            .select('id')
-            .single()
-
-          if (!profSubErr && profileSub) {
-            await client.from('form_responses').insert([
-              { submission_id: profileSub.id, field_id: CROP_FIELD_ID, array_value: signupData.crop },
-              { submission_id: profileSub.id, field_id: AREA_FIELD_ID, text_value: String(signupData.area) },
-            ])
-          }
-          debugLog('Signup data saved')
-          showNotification('success', 'สร้างบัญชีเกษตรกรเรียบร้อย')
-        }
 
         debugLog('Creating survey submission...')
         const { data: submission, error: subErr } = await client
@@ -1120,7 +1136,7 @@ export default {
 
         emit('trigger-event', {
           name: 'survey-completed',
-          event: { submissionId: submission.id, farmerId, isNewUser: createdNewUser },
+          event: { submissionId: submission.id, farmerId, isNewUser: isNewUser.value },
         })
 
         reset()
@@ -1219,7 +1235,7 @@ export default {
       monthOptions, weedOptions, insectOptions, diseaseOptions,
       growthStages, investmentOptions, cropOptions,
       costPctSum, varietySummary, totalSprays,
-      lookupFarmer, goToSignup, startSurvey, validateAndStartSurvey,
+      lookupFarmer, goToSignup, startSurvey, validateAndCreateUser, isCreatingUser,
       toggleCrop,
       nextStep, prevStep, updateSprayStage,
       monthLabel, investmentLabel, cropLabel, foundCount,
