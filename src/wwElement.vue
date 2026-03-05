@@ -476,13 +476,17 @@
 
       <!-- Survey navigation buttons -->
       <div v-if="currentStep < 6" class="rice-survey__nav">
-        <PolarisButton
-          v-if="currentStep > 1"
-          @click="prevStep"
-        >
-          ย้อนกลับ
+        <div class="rice-survey__nav-left">
+          <PolarisButton
+            v-if="currentStep > 1"
+            @click="prevStep"
+          >
+            ย้อนกลับ
+          </PolarisButton>
+        </div>
+        <PolarisButton variant="plain" @click="cancelSurvey">
+          ยกเลิก
         </PolarisButton>
-        <div v-else></div>
         <PolarisButton variant="primary" @click="nextStep">
           ถัดไป
         </PolarisButton>
@@ -1132,6 +1136,11 @@ export default {
       }
     }
 
+    function cancelSurvey() {
+      reset()
+      emit('trigger-event', { name: 'survey-closed', event: {} })
+    }
+
     // ─── Reset action ───
     function reset() {
       phase.value = 'tel_lookup'
@@ -1214,7 +1223,7 @@ export default {
       toggleCrop,
       nextStep, prevStep, updateSprayStage,
       monthLabel, investmentLabel, cropLabel, foundCount,
-      handleSubmit, dismissNotification, reset,
+      handleSubmit, dismissNotification, reset, cancelSurvey,
     }
   },
 }
@@ -1240,12 +1249,15 @@ export default {
   }
 
   &__notifications {
+    position: fixed;
+    top: var(--p-space-400);
+    right: var(--p-space-400);
+    z-index: 999;
     display: flex;
     flex-direction: column;
     gap: var(--p-space-200);
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    width: 360px;
+    max-width: calc(100vw - 32px);
   }
 
   &__phase {
@@ -1310,9 +1322,14 @@ export default {
 
   &__nav {
     display: flex;
-    justify-content: space-between;
+    align-items: center;
+    gap: var(--p-space-200);
     padding-top: var(--p-space-300);
     border-top: var(--p-border-width-025) solid var(--p-color-border);
+  }
+
+  &__nav-left {
+    flex: 1;
   }
 
   &__review-grid {
