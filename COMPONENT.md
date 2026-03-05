@@ -222,6 +222,28 @@ ww-config.js                      # WeWeb editor configuration
 package.json                      # Dependencies: polaris-weweb-styles, @supabase/supabase-js
 ```
 
+## Survey Navigation
+
+Each survey step (1-5) has a navigation bar with three controls:
+
+| Position | Button | Action |
+|----------|--------|--------|
+| Left | **ย้อนกลับ** (Back) | Go to previous step. Hidden on step 1. |
+| Center | **ยกเลิก** (Cancel) | Reset everything and return to Phase 1 (tel lookup). Fires `survey-closed` trigger. |
+| Right | **ถัดไป** (Next) | Validate current step and advance. |
+
+Step 6 (review) has a single full-width "ยืนยันและส่งแบบสอบถาม" submit button instead.
+
+## Address Cascading Selects (Phase 2)
+
+Province, district, and subdistrict are rendered as three `<PolarisSelect>` dropdowns in a single row, fetched from `address_th_*` tables:
+
+1. **Province** — all 77 Thai provinces loaded on component mount from `address_th_province`
+2. **District** — filtered by `province_id` when a province is selected from `address_th_district`
+3. **Subdistrict** — filtered by `district_id` when a district is selected from `address_th_subdistrict`
+
+Selecting a province clears the district and subdistrict. Selecting a district clears the subdistrict. The display names (not IDs) are stored in `user_address.city`, `user_address.district`, and `user_address.subdistrict`.
+
 ## Validation Rules
 
 | Phase/Step | Rule |
