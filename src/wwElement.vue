@@ -94,27 +94,32 @@
               />
             </div>
 
-            <PolarisTextField
-              label="จังหวัด"
-              required
-              :modelValue="signupData.city"
-              @update:modelValue="signupData.city = $event"
-              :error="signupErrors.city"
-            />
-            <div class="rice-survey__form-row">
-              <PolarisTextField
-                label="อำเภอ"
-                required
-                :modelValue="signupData.district"
-                @update:modelValue="signupData.district = $event"
-                :error="signupErrors.district"
+            <div class="rice-survey__form-row rice-survey__form-row--3col">
+              <PolarisSelect
+                label="จังหวัด *"
+                :options="provinces"
+                :modelValue="signupData.province_id"
+                @update:modelValue="onProvinceChange($event)"
+                :error="signupErrors.city"
+                placeholder="เลือกจังหวัด"
               />
-              <PolarisTextField
-                label="ตำบล"
-                required
-                :modelValue="signupData.subdistrict"
-                @update:modelValue="signupData.subdistrict = $event"
+              <PolarisSelect
+                label="อำเภอ *"
+                :options="districts"
+                :modelValue="signupData.district_id"
+                @update:modelValue="onDistrictChange($event)"
+                :error="signupErrors.district"
+                placeholder="เลือกอำเภอ"
+                :disabled="!signupData.province_id"
+              />
+              <PolarisSelect
+                label="ตำบล *"
+                :options="subdistricts"
+                :modelValue="subdistricts.find(s => s.label === signupData.subdistrict)?.value || ''"
+                @update:modelValue="onSubdistrictChange($event)"
                 :error="signupErrors.subdistrict"
+                placeholder="เลือกตำบล"
+                :disabled="!signupData.district_id"
               />
             </div>
 
@@ -604,10 +609,77 @@ export default {
       city: '',
       district: '',
       subdistrict: '',
+      province_id: null,
+      district_id: null,
       crop: [],
       area: null,
     })
     const signupErrors = reactive({})
+
+    // ─── Address cascading data ───
+    const provinces = ref([])
+    const districts = ref([])
+    const subdistricts = ref([])
+
+    async function fetchProvinces() {
+      const client = supabase.value
+      if (!client) return
+      const { data } = await client
+        .from('address_th_province')
+        .select('id, province_name_th')
+        .order('sort_order')
+      provinces.value = (data || []).map(p => ({ value: p.id, label: p.province_name_th }))
+    }
+
+    async function fetchDistricts(provinceId) {
+      districts.value = []
+      subdistricts.value = []
+      signupData.district = ''
+      signupData.district_id = null
+      signupData.subdistrict = ''
+      if (!provinceId) return
+      const client = supabase.value
+      if (!client) return
+      const { data } = await client
+        .from('address_th_district')
+        .select('id, district_name_th')
+        .eq('province_id', Number(provinceId))
+        .order('sort_order')
+      districts.value = (data || []).map(d => ({ value: d.id, label: d.district_name_th }))
+    }
+
+    async function fetchSubdistricts(districtId) {
+      subdistricts.value = []
+      signupData.subdistrict = ''
+      if (!districtId) return
+      const client = supabase.value
+      if (!client) return
+      const { data } = await client
+        .from('address_th_subdistrict')
+        .select('id, subdistrict_name_th')
+        .eq('district_id', Number(districtId))
+        .order('id')
+      subdistricts.value = (data || []).map(s => ({ value: s.id, label: s.subdistrict_name_th }))
+    }
+
+    function onProvinceChange(val) {
+      const prov = provinces.value.find(p => p.value === val)
+      signupData.city = prov?.label || ''
+      signupData.province_id = val
+      fetchDistricts(val)
+    }
+
+    function onDistrictChange(val) {
+      const dist = districts.value.find(d => d.value === val)
+      signupData.district = dist?.label || ''
+      signupData.district_id = val
+      fetchSubdistricts(val)
+    }
+
+    function onSubdistrictChange(val) {
+      const sub = subdistricts.value.find(s => s.value === val)
+      signupData.subdistrict = sub?.label || ''
+    }
 
     // ─── Survey state ───
     const surveyData = reactive({
@@ -681,9 +753,8 @@ export default {
     function showNotification(type, message) {
       const id = Date.now().toString()
       notifications.value.push({ id, type, message, timestamp: Date.now() })
-      if (type === 'success' || type === 'info') {
-        setTimeout(() => dismissNotification(id), 5000)
-      }
+      const delay = type === 'error' ? 8000 : type === 'warning' ? 4000 : 3000
+      setTimeout(() => dismissNotification(id), delay)
     }
 
     function dismissNotification(id) {
@@ -1047,6 +1118,8 @@ export default {
           name: 'survey-completed',
           event: { submissionId: submission.id, farmerId, isNewUser: createdNewUser },
         })
+
+        reset()
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Unknown error'
         submitError.value = msg
@@ -1071,8 +1144,11 @@ export default {
       submitError.value = null
 
       Object.assign(signupData, {
-        firstname: '', lastname: '', city: '', district: '', subdistrict: '', crop: [], area: null,
+        firstname: '', lastname: '', city: '', district: '', subdistrict: '',
+        province_id: null, district_id: null, crop: [], area: null,
       })
+      districts.value = []
+      subdistricts.value = []
 
       Object.assign(surveyData, {
         a1_age: null, a2_rice_area_rai: null, a3_harvest_month: null,
@@ -1106,6 +1182,7 @@ export default {
     // ─── Lifecycle ───
     onMounted(() => {
       debugLog(`Component mounted, interviewer: ${props.content?.userId || 'unknown'}`)
+      fetchProvinces()
     })
 
     // ─── Expose for WeWeb actions ───
@@ -1124,6 +1201,8 @@ export default {
       phase, currentStep, totalSteps,
       telInput, telError, isLookingUp, farmerUser, showNotFoundBanner, isNewUser,
       signupData, signupErrors,
+      provinces, districts, subdistricts,
+      onProvinceChange, onDistrictChange, onSubdistrictChange,
       surveyData, stepErrors,
       isSubmitting, submitError,
       notifications, debugMessages, showDebug,
@@ -1182,6 +1261,12 @@ export default {
 
     @media (min-width: 600px) {
       grid-template-columns: 1fr 1fr;
+    }
+
+    &--3col {
+      @media (min-width: 600px) {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
     }
   }
 
