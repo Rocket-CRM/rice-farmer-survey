@@ -507,6 +507,12 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { createClient } from '@supabase/supabase-js'
 import {
+  PolarisCard, PolarisCardHeader, PolarisCardSection,
+  PolarisTextField, PolarisSelect, PolarisCheckbox,
+  PolarisButton, PolarisBanner, PolarisBadge,
+  PolarisText, PolarisBlockStack, PolarisInline,
+} from 'polaris-weweb-styles/components'
+import {
   FORM_ID, MERCHANT_ID, USER_PROFILE_FORM_ID,
   CROP_FIELD_ID, AREA_FIELD_ID, FIELDS,
   MONTH_OPTIONS, WEED_OPTIONS, INSECT_OPTIONS, DISEASE_OPTIONS,
@@ -519,7 +525,13 @@ import SprayStagePanel from './components/SprayStagePanel.vue'
 import VarietyRepeater from './components/VarietyRepeater.vue'
 
 export default {
-  components: { AssessmentMatrix, SprayStagePanel, VarietyRepeater },
+  components: {
+    PolarisCard, PolarisCardHeader, PolarisCardSection,
+    PolarisTextField, PolarisSelect, PolarisCheckbox,
+    PolarisButton, PolarisBanner, PolarisBadge,
+    PolarisText, PolarisBlockStack, PolarisInline,
+    AssessmentMatrix, SprayStagePanel, VarietyRepeater,
+  },
   props: {
     uid: { type: String, required: true },
     content: { type: Object, required: true },

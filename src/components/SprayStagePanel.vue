@@ -57,9 +57,17 @@
 </template>
 
 <script>
+import {
+  PolarisCard, PolarisCardHeader, PolarisCardSection,
+  PolarisTextField, PolarisSelect, PolarisBlockStack, PolarisText,
+} from 'polaris-weweb-styles/components'
 import { SPRAY_TYPE_OPTIONS } from '../constants.js'
 
 export default {
+  components: {
+    PolarisCard, PolarisCardHeader, PolarisCardSection,
+    PolarisTextField, PolarisSelect, PolarisBlockStack, PolarisText,
+  },
   props: {
     stageKey: { type: String, required: true },
     stageLabel: { type: String, required: true },

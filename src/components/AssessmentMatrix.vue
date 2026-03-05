@@ -72,11 +72,14 @@
 </template>
 
 <script>
+import {
+  PolarisCheckbox, PolarisTextField, PolarisText,
+} from 'polaris-weweb-styles/components'
 import { GROWTH_STAGES } from '../constants.js'
 import RatingScale from './RatingScale.vue'
 
 export default {
-  components: { RatingScale },
+  components: { PolarisCheckbox, PolarisTextField, PolarisText, RatingScale },
   props: {
     title: { type: String, required: true },
     items: { type: Array, required: true },

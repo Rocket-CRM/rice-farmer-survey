@@ -56,7 +56,12 @@
 </template>
 
 <script>
+import {
+  PolarisText, PolarisTextField, PolarisButton,
+} from 'polaris-weweb-styles/components'
+
 export default {
+  components: { PolarisText, PolarisTextField, PolarisButton },
   props: {
     modelValue: {
       type: Array,
