@@ -15,7 +15,8 @@ Phase 1: TEL LOOKUP
 
 Phase 2: SIGNUP (new farmers only)
   Collect: name, province/district/subdistrict (cascading selects), crops, area
-  Data held in memory — not saved until final submit
+  On "Next": create user_accounts + user_address + USER_PROFILE immediately
+  Errors surface here so interviewer can retry before starting the survey
 
 Phase 3: SURVEY (6 steps)
   Step 1: Section A — General farm info (age, area, varieties, yield, prices)
@@ -26,7 +27,7 @@ Phase 3: SURVEY (6 steps)
   Step 6: Review & Submit
 
   On submit:
-    1. If new user → create user_accounts + user_address + USER_PROFILE responses
+    1. Farmer already exists (found in Phase 1 or created in Phase 2)
     2. Create RICE_BIGGROWER_2026 form_submission + form_responses
     3. Show success toast, reset to Phase 1
 ```
@@ -88,16 +89,21 @@ x-merchant-id: 8f67aa08-dfce-454d-bfb1-effc4ee45f1f
 | `address_th_district` | District dropdown (filtered by province_id) | Phase 2 on province select |
 | `address_th_subdistrict` | Subdistrict dropdown (filtered by district_id) | Phase 2 on district select |
 
-### Tables Written (on submit)
+### Tables Written (on signup — Phase 2 "Next" click)
 
-| Table | When | What |
-|-------|------|------|
-| `user_accounts` | New farmer only | `INSERT` with merchant_id, tel, firstname, lastname |
-| `user_address` | New farmer only | `INSERT` with user_id, merchant_id, city, district, subdistrict |
-| `form_submissions` | New farmer only | `INSERT` for USER_PROFILE form (crop + area) |
-| `form_responses` | New farmer only | `INSERT` crop (array_value) + area (text_value) |
-| `form_submissions` | Always | `INSERT` for RICE_BIGGROWER_2026 survey |
-| `form_responses` | Always | `INSERT` all survey field responses (14-19 rows) |
+| Table | What |
+|-------|------|
+| `user_accounts` | `INSERT` with merchant_id, tel, firstname, lastname, is_signup_form_complete |
+| `user_address` | `INSERT` with user_id, merchant_id, city, district, subdistrict |
+| `form_submissions` | `INSERT` for USER_PROFILE form |
+| `form_responses` | `INSERT` crop (array_value) + area (text_value) |
+
+### Tables Written (on survey submit — Step 6)
+
+| Table | What |
+|-------|------|
+| `form_submissions` | `INSERT` for RICE_BIGGROWER_2026 survey |
+| `form_responses` | `INSERT` all survey field responses (14-19 rows) |
 
 ### Phone Number Normalization
 
