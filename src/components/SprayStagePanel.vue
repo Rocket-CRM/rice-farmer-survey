@@ -36,9 +36,11 @@
                 />
                 <PolarisTextField
                   label="E4. ปริมาณที่ใช้"
+                  type="number"
+                  :min="0"
+                  suffix="มล./ไร่"
                   :modelValue="app.amount"
-                  @update:modelValue="updateApp(idx, 'amount', $event)"
-                  placeholder="เช่น 100 มล./ไร่"
+                  @update:modelValue="updateApp(idx, 'amount', $event ? Number($event) : null)"
                 />
                 <PolarisTextField
                   label="E5. จำนวนน้ำ (ลิตร/ไร่)"
@@ -86,7 +88,7 @@ export default {
       const existing = this.stageData?.applications || []
       const result = []
       for (let i = 0; i < count; i++) {
-        result.push(existing[i] || { product: '', type: '', amount: '', water_liters: null })
+        result.push(existing[i] || { product: '', type: '', amount: null, water_liters: null })
       }
       return result
     },
@@ -96,7 +98,7 @@ export default {
       const clamped = Math.max(0, Math.min(20, count))
       const apps = [...(this.stageData?.applications || [])]
       while (apps.length < clamped) {
-        apps.push({ product: '', type: '', amount: '', water_liters: null })
+        apps.push({ product: '', type: '', amount: null, water_liters: null })
       }
       this.$emit('update:modelValue', {
         total_sprays: clamped,

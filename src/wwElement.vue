@@ -48,7 +48,7 @@
             >
               พบข้อมูล: {{ farmerUser.firstname }} {{ farmerUser.lastname }}
               <template #actions>
-                <PolarisButton size="slim" @click="startSurvey">เริ่มสำรวจ</PolarisButton>
+                <PolarisButton size="slim" @click="goToProfileReview">ตรวจสอบข้อมูล</PolarisButton>
               </template>
             </PolarisBanner>
 
@@ -159,6 +159,99 @@
     </div>
 
     <!-- ═══════════════════════════════════════════ -->
+    <!-- PHASE 2.5: Profile Review/Edit             -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div v-else-if="phase === 'profile_review'" class="rice-survey__phase">
+      <PolarisCard>
+        <PolarisCardHeader
+          title="ตรวจสอบข้อมูลเกษตรกร"
+          description="กรุณาตรวจสอบและแก้ไขข้อมูลหากไม่ถูกต้อง"
+        />
+        <PolarisCardSection>
+          <PolarisBlockStack gap="400">
+            <div class="rice-survey__form-row">
+              <PolarisTextField
+                label="ชื่อ"
+                required
+                :modelValue="profileData.firstname"
+                @update:modelValue="profileData.firstname = $event"
+                :error="profileErrors.firstname"
+              />
+              <PolarisTextField
+                label="นามสกุล"
+                required
+                :modelValue="profileData.lastname"
+                @update:modelValue="profileData.lastname = $event"
+                :error="profileErrors.lastname"
+              />
+            </div>
+
+            <div class="rice-survey__form-row rice-survey__form-row--3col">
+              <PolarisSelect
+                label="จังหวัด *"
+                :options="provinces"
+                :modelValue="profileData.province_id"
+                @update:modelValue="onProfileProvinceChange($event)"
+                :error="profileErrors.city"
+                placeholder="เลือกจังหวัด"
+              />
+              <PolarisSelect
+                label="อำเภอ *"
+                :options="profileDistricts"
+                :modelValue="profileData.district_id"
+                @update:modelValue="onProfileDistrictChange($event)"
+                :error="profileErrors.district"
+                placeholder="เลือกอำเภอ"
+                :disabled="!profileData.province_id"
+              />
+              <PolarisSelect
+                label="ตำบล *"
+                :options="profileSubdistricts"
+                :modelValue="profileSubdistricts.find(s => s.label === profileData.subdistrict)?.value || ''"
+                @update:modelValue="onProfileSubdistrictChange($event)"
+                :error="profileErrors.subdistrict"
+                placeholder="เลือกตำบล"
+                :disabled="!profileData.district_id"
+              />
+            </div>
+
+            <div class="rice-survey__crop-section">
+              <PolarisText variant="bodyMd" fontWeight="semibold">พืชที่ปลูก *</PolarisText>
+              <div class="rice-survey__crop-checks">
+                <PolarisCheckbox
+                  v-for="crop in cropOptions"
+                  :key="crop.value"
+                  :label="crop.label"
+                  :modelValue="profileData.crop.includes(crop.value)"
+                  @update:modelValue="toggleProfileCrop(crop.value, $event)"
+                />
+              </div>
+              <PolarisText v-if="profileErrors.crop" variant="bodySm" color="critical">{{ profileErrors.crop }}</PolarisText>
+            </div>
+
+            <PolarisTextField
+              label="พื้นที่เพาะปลูก (ไร่)"
+              required
+              type="number"
+              suffix="ไร่"
+              :modelValue="profileData.area"
+              @update:modelValue="profileData.area = $event ? Number($event) : null"
+              :error="profileErrors.area"
+            />
+
+            <PolarisInline gap="200">
+              <PolarisButton @click="phase = 'tel_lookup'">ย้อนกลับ</PolarisButton>
+              <PolarisButton variant="primary" :loading="isUpdatingProfile" @click="validateAndUpdateProfile">
+                บันทึกและเริ่มสำรวจ
+              </PolarisButton>
+              <PolarisButton variant="plain" @click="startSurvey">เริ่มสำรวจ (ไม่แก้ไข)</PolarisButton>
+            </PolarisInline>
+          </PolarisBlockStack>
+        </PolarisCardSection>
+      </PolarisCard>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
     <!-- PHASE 3: Survey Wizard                     -->
     <!-- ═══════════════════════════════════════════ -->
     <div v-else-if="phase === 'survey'" class="rice-survey__phase">
@@ -233,14 +326,14 @@
               />
               <PolarisTextField
                 label="A8. ราคาขายข้าวจากการเก็บเกี่ยวครั้งล่าสุด"
-                type="number" required :min="0" suffix="บาท/ตัน"
+                type="number" required :min="0" suffix="บาท/ตัน/เกวียน"
                 :modelValue="surveyData.a8_selling_price"
                 @update:modelValue="surveyData.a8_selling_price = $event ? Number($event) : null"
                 :error="stepErrors.a8_selling_price"
               />
               <PolarisTextField
                 label="A9. ราคาข้าวขั้นต่ำที่จะไม่ขาดทุน"
-                type="number" required :min="0" suffix="บาท/ตัน"
+                type="number" required :min="0" suffix="บาท/ตัน/เกวียน"
                 :modelValue="surveyData.a9_breakeven_price"
                 @update:modelValue="surveyData.a9_breakeven_price = $event ? Number($event) : null"
                 :error="stepErrors.a9_breakeven_price"
@@ -400,6 +493,11 @@
                   <PolarisText variant="bodySm" color="subdued">พืช: {{ signupData.crop.map(c => cropLabel(c)).join(', ') }}</PolarisText>
                   <PolarisText variant="bodySm" color="subdued">พื้นที่: {{ signupData.area }} ไร่</PolarisText>
                 </template>
+                <template v-else-if="profileData.city">
+                  <PolarisText variant="bodySm" color="subdued">{{ profileData.city }} / {{ profileData.district }} / {{ profileData.subdistrict }}</PolarisText>
+                  <PolarisText variant="bodySm" color="subdued" v-if="profileData.crop?.length">พืช: {{ profileData.crop.map(c => cropLabel(c)).join(', ') }}</PolarisText>
+                  <PolarisText variant="bodySm" color="subdued" v-if="profileData.area">พื้นที่: {{ profileData.area }} ไร่</PolarisText>
+                </template>
               </PolarisBlockStack>
             </PolarisCardSection>
           </PolarisCard>
@@ -408,7 +506,7 @@
           <PolarisCard>
             <PolarisCardHeader title="A) ข้อมูลทั่วไป">
               <template #action>
-                <PolarisButton variant="plain" size="slim" @click="currentStep = 1">แก้ไข</PolarisButton>
+                <PolarisButton variant="secondary" @click="currentStep = 1">แก้ไข</PolarisButton>
               </template>
             </PolarisCardHeader>
             <PolarisCardSection>
@@ -420,8 +518,8 @@
                 <div class="rice-survey__review-item"><span>ฤดู/ปี</span><strong>{{ surveyData.a5_seasons_per_year }}</strong></div>
                 <div class="rice-survey__review-item"><span>พันธุ์ข้าว</span><strong>{{ varietySummary }}</strong></div>
                 <div class="rice-survey__review-item"><span>ผลผลิต/ไร่</span><strong>{{ surveyData.a7_yield_per_rai }} กก.</strong></div>
-                <div class="rice-survey__review-item"><span>ราคาขาย</span><strong>{{ surveyData.a8_selling_price }} บาท/ตัน</strong></div>
-                <div class="rice-survey__review-item"><span>จุดคุ้มทุน</span><strong>{{ surveyData.a9_breakeven_price }} บาท/ตัน</strong></div>
+                <div class="rice-survey__review-item"><span>ราคาขาย</span><strong>{{ surveyData.a8_selling_price }} บาท/ตัน/เกวียน</strong></div>
+                <div class="rice-survey__review-item"><span>จุดคุ้มทุน</span><strong>{{ surveyData.a9_breakeven_price }} บาท/ตัน/เกวียน</strong></div>
               </div>
             </PolarisCardSection>
           </PolarisCard>
@@ -430,7 +528,7 @@
           <PolarisCard>
             <PolarisCardHeader title="B-D) ศัตรูพืช">
               <template #action>
-                <PolarisButton variant="plain" size="slim" @click="currentStep = 2">แก้ไข</PolarisButton>
+                <PolarisButton variant="secondary" @click="currentStep = 2">แก้ไข</PolarisButton>
               </template>
             </PolarisCardHeader>
             <PolarisCardSection>
@@ -446,7 +544,7 @@
           <PolarisCard>
             <PolarisCardHeader title="E) สารอารักขาพืช">
               <template #action>
-                <PolarisButton variant="plain" size="slim" @click="currentStep = 5">แก้ไข</PolarisButton>
+                <PolarisButton variant="secondary" @click="currentStep = 5">แก้ไข</PolarisButton>
               </template>
             </PolarisCardHeader>
             <PolarisCardSection>
@@ -493,6 +591,36 @@
       </div>
     </div>
 
+    <!-- Cancel confirmation modal -->
+    <div v-if="showCancelConfirm" class="rice-survey__modal-overlay" @click.self="showCancelConfirm = false">
+      <PolarisCard>
+        <PolarisCardHeader title="ยืนยันการยกเลิก" />
+        <PolarisCardSection>
+          <PolarisBlockStack gap="400">
+            <PolarisText variant="bodyMd">ต้องการยกเลิกแบบสอบถาม? ข้อมูลทั้งหมดที่กรอกจะถูกลบ</PolarisText>
+            <PolarisInline gap="200">
+              <PolarisButton @click="showCancelConfirm = false">กลับไปทำต่อ</PolarisButton>
+              <PolarisButton variant="primary" @click="confirmCancel">ยืนยันยกเลิก</PolarisButton>
+            </PolarisInline>
+          </PolarisBlockStack>
+        </PolarisCardSection>
+      </PolarisCard>
+    </div>
+
+    <!-- Success modal -->
+    <div v-if="showSuccessModal" class="rice-survey__modal-overlay">
+      <PolarisCard>
+        <PolarisCardSection>
+          <div class="rice-survey__success-content">
+            <div class="rice-survey__success-icon">✓</div>
+            <PolarisText variant="headingLg">บันทึกแบบสอบถามเรียบร้อยแล้ว</PolarisText>
+            <PolarisText variant="bodySm" color="subdued">ข้อมูลถูกบันทึกเข้าระบบเรียบร้อย</PolarisText>
+            <PolarisButton variant="primary" fullWidth @click="closeSuccessAndReset">กลับหน้าหลัก</PolarisButton>
+          </div>
+        </PolarisCardSection>
+      </PolarisCard>
+    </div>
+
     <!-- Debug panel -->
     <div class="rice-survey__debug-toggle">
       <button class="rice-survey__debug-btn" @click="showDebug = !showDebug">
@@ -525,7 +653,7 @@ import {
   FORM_ID, MERCHANT_ID, USER_PROFILE_FORM_ID,
   CROP_FIELD_ID, AREA_FIELD_ID, FIELDS,
   MONTH_OPTIONS, WEED_OPTIONS, INSECT_OPTIONS, DISEASE_OPTIONS,
-  GROWTH_STAGES, INVESTMENT_OPTIONS, CROP_OPTIONS,
+  GROWTH_STAGES, INVESTMENT_OPTIONS, CROP_OPTIONS, RICE_VARIETY_OPTIONS,
   SURVEY_STEPS, normalizeTel,
   initWeedAssessment, initInsectAssessment, initDiseaseAssessment, initSprayApplications,
 } from './constants.js'
@@ -685,6 +813,233 @@ export default {
       signupData.subdistrict = sub?.label || ''
     }
 
+    // ─── Profile edit state (for existing farmers) ───
+    const profileData = reactive({
+      firstname: '',
+      lastname: '',
+      city: '',
+      district: '',
+      subdistrict: '',
+      province_id: null,
+      district_id: null,
+      crop: [],
+      area: null,
+    })
+    const profileErrors = reactive({})
+    const isUpdatingProfile = ref(false)
+    const profileAddressId = ref(null)
+    const profileSubmissionId = ref(null)
+
+    async function fetchFarmerProfile(userId) {
+      const client = supabase.value
+      if (!client || !userId) return
+      debugLog(`Fetching profile for user: ${userId}`)
+
+      try {
+        const { data: addrData } = await client
+          .from('user_address')
+          .select('id, city, district, subdistrict')
+          .eq('user_id', userId)
+          .eq('merchant_id', MERCHANT_ID)
+          .maybeSingle()
+
+        if (addrData) {
+          profileAddressId.value = addrData.id
+          profileData.city = addrData.city || ''
+          profileData.district = addrData.district || ''
+          profileData.subdistrict = addrData.subdistrict || ''
+
+          const matchedProvince = provinces.value.find(p => p.label === addrData.city)
+          if (matchedProvince) {
+            profileData.province_id = matchedProvince.value
+            await fetchProfileDistricts(matchedProvince.value)
+            const matchedDistrict = profileDistricts.value.find(d => d.label === addrData.district)
+            if (matchedDistrict) {
+              profileData.district_id = matchedDistrict.value
+              await fetchProfileSubdistricts(matchedDistrict.value)
+            }
+          }
+        }
+
+        const { data: subData } = await client
+          .from('form_submissions')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('form_id', USER_PROFILE_FORM_ID)
+          .eq('merchant_id', MERCHANT_ID)
+          .order('submitted_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (subData) {
+          profileSubmissionId.value = subData.id
+          const { data: respData } = await client
+            .from('form_responses')
+            .select('field_id, text_value, array_value')
+            .eq('submission_id', subData.id)
+
+          if (respData) {
+            const cropResp = respData.find(r => r.field_id === CROP_FIELD_ID)
+            const areaResp = respData.find(r => r.field_id === AREA_FIELD_ID)
+            if (cropResp?.array_value) profileData.crop = cropResp.array_value
+            if (areaResp?.text_value) profileData.area = Number(areaResp.text_value)
+          }
+        }
+
+        debugLog('Profile fetched successfully')
+      } catch (err) {
+        debugLog(`Profile fetch error: ${err?.message}`)
+      }
+    }
+
+    const profileDistricts = ref([])
+    const profileSubdistricts = ref([])
+
+    async function fetchProfileDistricts(provinceId) {
+      profileDistricts.value = []
+      profileSubdistricts.value = []
+      if (!provinceId) return
+      const client = supabase.value
+      if (!client) return
+      const { data } = await client
+        .from('address_th_district')
+        .select('id, district_name_th')
+        .eq('province_id', Number(provinceId))
+        .order('sort_order')
+      profileDistricts.value = (data || []).map(d => ({ value: d.id, label: d.district_name_th }))
+    }
+
+    async function fetchProfileSubdistricts(districtId) {
+      profileSubdistricts.value = []
+      if (!districtId) return
+      const client = supabase.value
+      if (!client) return
+      const { data } = await client
+        .from('address_th_subdistrict')
+        .select('id, subdistrict_name_th')
+        .eq('district_id', Number(districtId))
+        .order('id')
+      profileSubdistricts.value = (data || []).map(s => ({ value: s.id, label: s.subdistrict_name_th }))
+    }
+
+    function onProfileProvinceChange(val) {
+      const prov = provinces.value.find(p => p.value === val)
+      profileData.city = prov?.label || ''
+      profileData.province_id = val
+      profileData.district = ''
+      profileData.district_id = null
+      profileData.subdistrict = ''
+      fetchProfileDistricts(val)
+    }
+
+    function onProfileDistrictChange(val) {
+      const dist = profileDistricts.value.find(d => d.value === val)
+      profileData.district = dist?.label || ''
+      profileData.district_id = val
+      profileData.subdistrict = ''
+      fetchProfileSubdistricts(val)
+    }
+
+    function onProfileSubdistrictChange(val) {
+      const sub = profileSubdistricts.value.find(s => s.value === val)
+      profileData.subdistrict = sub?.label || ''
+    }
+
+    function toggleProfileCrop(value, checked) {
+      if (checked) {
+        if (!profileData.crop.includes(value)) profileData.crop.push(value)
+      } else {
+        profileData.crop = profileData.crop.filter(v => v !== value)
+      }
+    }
+
+    async function validateAndUpdateProfile() {
+      const errs = {}
+      if (!profileData.firstname?.trim()) errs.firstname = 'กรุณากรอกชื่อ'
+      if (!profileData.lastname?.trim()) errs.lastname = 'กรุณากรอกนามสกุล'
+      if (!profileData.city?.trim()) errs.city = 'กรุณาเลือกจังหวัด'
+      if (!profileData.district?.trim()) errs.district = 'กรุณาเลือกอำเภอ'
+      if (!profileData.subdistrict?.trim()) errs.subdistrict = 'กรุณาเลือกตำบล'
+      if (!profileData.crop?.length) errs.crop = 'กรุณาเลือกพืชที่ปลูกอย่างน้อย 1 ชนิด'
+      if (!profileData.area || profileData.area <= 0) errs.area = 'กรุณากรอกพื้นที่'
+
+      Object.keys(profileErrors).forEach(k => delete profileErrors[k])
+      Object.assign(profileErrors, errs)
+
+      if (Object.keys(errs).length) {
+        showNotification('warning', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบ')
+        return
+      }
+
+      isUpdatingProfile.value = true
+      const farmerId = farmerUser.value?.id
+
+      try {
+        const client = supabase.value
+        if (!client) throw new Error('Supabase not configured')
+
+        debugLog('Updating farmer profile...')
+
+        const { error: userErr } = await client
+          .from('user_accounts')
+          .update({ firstname: profileData.firstname, lastname: profileData.lastname })
+          .eq('id', farmerId)
+          .eq('merchant_id', MERCHANT_ID)
+        if (userErr) debugLog(`Name update warning: ${userErr.message}`)
+
+        if (profileAddressId.value) {
+          const { error: addrErr } = await client
+            .from('user_address')
+            .update({
+              city: profileData.city,
+              district: profileData.district,
+              subdistrict: profileData.subdistrict,
+            })
+            .eq('id', profileAddressId.value)
+          if (addrErr) debugLog(`Address update warning: ${addrErr.message}`)
+        } else {
+          await client.from('user_address').insert({
+            user_id: farmerId,
+            merchant_id: MERCHANT_ID,
+            city: profileData.city,
+            district: profileData.district,
+            subdistrict: profileData.subdistrict,
+          })
+        }
+
+        if (profileSubmissionId.value) {
+          await client.from('form_responses')
+            .update({ array_value: profileData.crop })
+            .eq('submission_id', profileSubmissionId.value)
+            .eq('field_id', CROP_FIELD_ID)
+
+          await client.from('form_responses')
+            .update({ text_value: String(profileData.area) })
+            .eq('submission_id', profileSubmissionId.value)
+            .eq('field_id', AREA_FIELD_ID)
+        }
+
+        farmerUser.value = { ...farmerUser.value, firstname: profileData.firstname, lastname: profileData.lastname }
+        setFarmerNameVar(`${profileData.firstname} ${profileData.lastname}`)
+
+        debugLog('Profile updated successfully')
+        showNotification('success', 'อัปเดตข้อมูลเรียบร้อย')
+
+        emit('trigger-event', {
+          name: 'profile-updated',
+          event: { farmerId, updatedFields: ['name', 'address', 'crop', 'area'] },
+        })
+
+        startSurvey()
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error'
+        debugLog(`Profile update ERROR: ${msg}`)
+        showNotification('error', `อัปเดตข้อมูลไม่สำเร็จ: ${msg}`)
+      } finally {
+        isUpdatingProfile.value = false
+      }
+    }
+
     // ─── Survey state ───
     const surveyData = reactive({
       a1_age: null,
@@ -692,7 +1047,7 @@ export default {
       a3_harvest_month: null,
       a4_farming_years: null,
       a5_seasons_per_year: null,
-      a6_rice_varieties: [{ variety: '', harvest_days: null }],
+      a6_rice_varieties: [{ variety: '', custom_variety: '', harvest_days: null }],
       a7_yield_per_rai: null,
       a8_selling_price: null,
       a9_breakeven_price: null,
@@ -715,6 +1070,9 @@ export default {
     const notifications = ref([])
     const debugMessages = ref([])
     const showDebug = ref(false)
+    const showCancelConfirm = ref(false)
+    const showSuccessModal = ref(false)
+    const lastSubmissionId = ref(null)
 
     // ─── Computed ───
     const currentStepTitle = computed(() =>
@@ -739,7 +1097,7 @@ export default {
 
     const varietySummary = computed(() => {
       const vars = surveyData.a6_rice_varieties?.filter(v => v?.variety) || []
-      return vars.map(v => v.variety).join(', ') || '-'
+      return vars.map(v => v.variety === 'other' ? (v.custom_variety || 'อื่นๆ') : v.variety).join(', ') || '-'
     })
 
     const totalSprays = computed(() => {
@@ -814,6 +1172,29 @@ export default {
     }
 
     // ─── Phase transitions ───
+    async function goToProfileReview() {
+      profileData.firstname = farmerUser.value?.firstname || ''
+      profileData.lastname = farmerUser.value?.lastname || ''
+      profileData.city = ''
+      profileData.district = ''
+      profileData.subdistrict = ''
+      profileData.province_id = null
+      profileData.district_id = null
+      profileData.crop = []
+      profileData.area = null
+      profileAddressId.value = null
+      profileSubmissionId.value = null
+      profileDistricts.value = []
+      profileSubdistricts.value = []
+      Object.keys(profileErrors).forEach(k => delete profileErrors[k])
+
+      phase.value = 'profile_review'
+      setCurrentPhaseVar('profile_review')
+      emit('trigger-event', { name: 'phase-changed', event: { phase: 'profile_review' } })
+
+      await fetchFarmerProfile(farmerUser.value?.id)
+    }
+
     function goToSignup() {
       isNewUser.value = true
       phase.value = 'signup'
@@ -948,9 +1329,13 @@ export default {
           errs.a4_farming_years = 'กรุณากรอกจำนวนปี'
         if (surveyData.a5_seasons_per_year == null || surveyData.a5_seasons_per_year < 1 || surveyData.a5_seasons_per_year > 4)
           errs.a5_seasons_per_year = 'กรุณากรอกจำนวนฤดู (1-4)'
-        const validVarieties = (surveyData.a6_rice_varieties || []).filter(v => v?.variety?.trim())
+        const validVarieties = (surveyData.a6_rice_varieties || []).filter(v => {
+          if (!v?.variety) return false
+          if (v.variety === 'other') return !!v.custom_variety?.trim()
+          return true
+        })
         if (!validVarieties.length)
-          errs.a6_rice_varieties = 'กรุณากรอกพันธุ์ข้าวอย่างน้อย 1 รายการ'
+          errs.a6_rice_varieties = 'กรุณาเลือกพันธุ์ข้าวอย่างน้อย 1 รายการ'
         if (surveyData.a7_yield_per_rai == null || surveyData.a7_yield_per_rai < 0)
           errs.a7_yield_per_rai = 'กรุณากรอกผลผลิต'
         if (surveyData.a8_selling_price == null || surveyData.a8_selling_price < 0)
@@ -987,6 +1372,26 @@ export default {
       if (currentStep.value === 5) {
         if (!surveyData.e7_investment_plan)
           errs.e7_investment_plan = 'กรุณาเลือกแผนการลงทุน'
+
+        const stages = surveyData.e1_e5_spray_applications?.stages || {}
+        Object.entries(stages).forEach(([stageKey, stageData]) => {
+          const sprays = stageData?.total_sprays || 0
+          const apps = stageData?.applications || []
+          for (let i = 0; i < sprays; i++) {
+            const app = apps[i]
+            if (!app) continue
+            if (!app.product?.trim())
+              errs[`spray_${stageKey}_${i}_product`] = 'true'
+            if (!app.type)
+              errs[`spray_${stageKey}_${i}_type`] = 'true'
+            if (app.amount == null || app.amount === '')
+              errs[`spray_${stageKey}_${i}_amount`] = 'true'
+          }
+        })
+        const sprayErrors = Object.keys(errs).filter(k => k.startsWith('spray_'))
+        if (sprayErrors.length) {
+          errs._spray = 'กรุณากรอกข้อมูลสารที่ใช้ให้ครบทุกครั้งที่ฉีดพ่น'
+        }
       }
 
       Object.keys(stepErrors).forEach(k => delete stepErrors[k])
@@ -1012,6 +1417,21 @@ export default {
         setCurrentStepVar(currentStep.value)
         emit('trigger-event', { name: 'step-changed', event: { step: currentStep.value } })
       }
+    }
+
+    function validateAllSteps() {
+      const savedStep = currentStep.value
+      for (let step = 1; step <= 5; step++) {
+        currentStep.value = step
+        if (!validateCurrentStep()) {
+          setCurrentStepVar(step)
+          emit('trigger-event', { name: 'step-changed', event: { step } })
+          return step
+        }
+      }
+      currentStep.value = savedStep
+      setCurrentStepVar(savedStep)
+      return null
     }
 
     // ─── Spray stage update ───
@@ -1068,7 +1488,12 @@ export default {
       }
 
       const complexMap = {
-        a6_rice_varieties: surveyData.a6_rice_varieties?.filter(v => v?.variety?.trim()) || [],
+        a6_rice_varieties: (surveyData.a6_rice_varieties || [])
+          .filter(v => v?.variety)
+          .map(v => ({
+            variety: v.variety === 'other' ? (v.custom_variety || 'อื่นๆ') : v.variety,
+            harvest_days: v.harvest_days,
+          })),
         b_weed_assessment: surveyData.b_weed_assessment,
         c_insect_assessment: surveyData.c_insect_assessment,
         d_disease_assessment: surveyData.d_disease_assessment,
@@ -1090,6 +1515,15 @@ export default {
 
     // ─── Submit ───
     async function handleSubmit() {
+      const failedStep = validateAllSteps()
+      if (failedStep != null) {
+        showNotification('warning', `กรุณากรอกข้อมูลในขั้นตอนที่ ${failedStep} ให้ครบก่อนส่ง`)
+        debugLog(`Validation failed at step ${failedStep}`)
+        return
+      }
+      currentStep.value = 6
+      setCurrentStepVar(6)
+
       isSubmitting.value = true
       setIsSubmittingVar(true)
       submitError.value = null
@@ -1132,14 +1566,14 @@ export default {
         if (respErr) throw new Error(`Response insert failed: ${respErr.message}`)
 
         debugLog('Submission complete!')
-        showNotification('success', 'บันทึกแบบสอบถามเรียบร้อยแล้ว')
 
         emit('trigger-event', {
           name: 'survey-completed',
           event: { submissionId: submission.id, farmerId, isNewUser: isNewUser.value },
         })
 
-        reset()
+        lastSubmissionId.value = submission.id
+        showSuccessModal.value = true
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Unknown error'
         submitError.value = msg
@@ -1153,8 +1587,19 @@ export default {
     }
 
     function cancelSurvey() {
+      showCancelConfirm.value = true
+    }
+
+    function confirmCancel() {
+      showCancelConfirm.value = false
       reset()
       emit('trigger-event', { name: 'survey-closed', event: {} })
+    }
+
+    function closeSuccessAndReset() {
+      showSuccessModal.value = false
+      lastSubmissionId.value = null
+      reset()
     }
 
     // ─── Reset action ───
@@ -1178,7 +1623,7 @@ export default {
       Object.assign(surveyData, {
         a1_age: null, a2_rice_area_rai: null, a3_harvest_month: null,
         a4_farming_years: null, a5_seasons_per_year: null,
-        a6_rice_varieties: [{ variety: '', harvest_days: null }],
+        a6_rice_varieties: [{ variety: '', custom_variety: '', harvest_days: null }],
         a7_yield_per_rai: null, a8_selling_price: null, a9_breakeven_price: null,
         b_weed_assessment: initWeedAssessment(),
         c_insect_assessment: initInsectAssessment(),
@@ -1193,6 +1638,9 @@ export default {
       Object.keys(stepErrors).forEach(k => delete stepErrors[k])
       notifications.value = []
       debugMessages.value = []
+      showCancelConfirm.value = false
+      showSuccessModal.value = false
+      lastSubmissionId.value = null
 
       setCurrentPhaseVar('tel_lookup')
       setCurrentStepVar(1)
@@ -1235,11 +1683,17 @@ export default {
       monthOptions, weedOptions, insectOptions, diseaseOptions,
       growthStages, investmentOptions, cropOptions,
       costPctSum, varietySummary, totalSprays,
-      lookupFarmer, goToSignup, startSurvey, validateAndCreateUser, isCreatingUser,
+      lookupFarmer, goToSignup, goToProfileReview, startSurvey,
+      validateAndCreateUser, isCreatingUser,
+      profileData, profileErrors, isUpdatingProfile,
+      profileDistricts, profileSubdistricts,
+      onProfileProvinceChange, onProfileDistrictChange, onProfileSubdistrictChange,
+      toggleProfileCrop, validateAndUpdateProfile,
       toggleCrop,
-      nextStep, prevStep, updateSprayStage,
+      nextStep, prevStep, validateAllSteps, updateSprayStage,
       monthLabel, investmentLabel, cropLabel, foundCount,
-      handleSubmit, dismissNotification, reset, cancelSurvey,
+      handleSubmit, dismissNotification, reset, cancelSurvey, confirmCancel,
+      showCancelConfirm, showSuccessModal, lastSubmissionId, closeSuccessAndReset,
     }
   },
 }
@@ -1367,6 +1821,39 @@ export default {
 
     span { color: var(--p-color-text-secondary); }
     strong { color: var(--p-color-text); font-weight: var(--p-font-weight-semibold); }
+  }
+
+  &__modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    padding: var(--p-space-400);
+  }
+
+  &__success-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--p-space-400);
+    padding: var(--p-space-600) var(--p-space-400);
+    text-align: center;
+  }
+
+  &__success-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--p-color-bg-fill-success, #AEE9D1);
+    color: var(--p-color-text-success, #1A7346);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: var(--p-font-weight-bold);
   }
 
   &__debug-toggle {

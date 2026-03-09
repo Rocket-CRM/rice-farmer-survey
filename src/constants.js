@@ -138,6 +138,23 @@ export const CROP_OPTIONS = [
   { value: 'other_field_crops', label: 'พืชไร่อื่นๆ' },
 ]
 
+export const RICE_VARIETY_OPTIONS = [
+  { value: 'กข 41', label: 'กข 41' },
+  { value: 'กข 85', label: 'กข 85' },
+  { value: 'กข 61', label: 'กข 61' },
+  { value: '5451', label: '5451 (ข้าวเวียดนาม)' },
+  { value: 'ขาวดอกมะลิ 105', label: 'ขาวดอกมะลิ 105' },
+  { value: 'พิษณุโลก 2', label: 'พิษณุโลก 2' },
+  { value: 'กข 49', label: 'กข 49' },
+  { value: 'กข 79', label: 'กข 79' },
+  { value: 'กข 95', label: 'กข 95' },
+  { value: 'กข 5', label: 'กข 5' },
+  { value: 'จัสมิน 20', label: 'จัสมิน 20' },
+  { value: 'กข 57', label: 'กข 57' },
+  { value: 'กข 47', label: 'กข 47' },
+  { value: 'other', label: 'อื่นๆ โปรดระบุ' },
+]
+
 export const SPRAY_TYPE_OPTIONS = [
   { value: 'herbicide', label: 'ยาหญ้า' },
   { value: 'insecticide', label: 'ยาแมลง' },

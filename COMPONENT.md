@@ -4,32 +4,40 @@ A WeWeb custom component (Vue 3, Composition API) for conducting rice farmer fie
 
 ## Component Flow
 
-The component operates in three sequential phases, all within a single embedded UI:
+The component operates in sequential phases, all within a single embedded UI:
 
 ```
 Phase 1: TEL LOOKUP
   Interviewer enters farmer's phone number → lookup in user_accounts
 
-    ├─ Found → show farmer name, proceed to Phase 3
-    └─ Not found → proceed to Phase 2
+    ├─ Found → proceed to Phase 2 (Profile Review)
+    └─ Not found → proceed to Phase 3 (Signup)
 
-Phase 2: SIGNUP (new farmers only)
+Phase 2: PROFILE REVIEW/EDIT (existing farmers)
+  Display farmer's current profile: name, address, crops, planting area
+  Interviewer can edit and save corrections, or skip and start the survey
+  On "Save": UPDATE user_accounts + user_address + form_responses
+
+Phase 3: SIGNUP (new farmers only)
   Collect: name, province/district/subdistrict (cascading selects), crops, area
   On "Next": create user_accounts + user_address + USER_PROFILE immediately
   Errors surface here so interviewer can retry before starting the survey
 
-Phase 3: SURVEY (6 steps)
-  Step 1: Section A — General farm info (age, area, varieties, yield, prices)
+Phase 4: SURVEY (6 steps)
+  Step 1: Section A — General farm info (age, area, varieties via dropdown, yield, prices)
   Step 2: Section B — Weed assessment (39 items)
   Step 3: Section C — Insect/pest assessment (9 items)
   Step 4: Section D — Disease assessment (11 items)
   Step 5: Section E — Pesticide usage (spray apps per growth stage + costs)
   Step 6: Review & Submit
 
+  Cancel button shows a confirmation modal before resetting.
+  All steps are re-validated before submission (incomplete answers are blocked).
+
   On submit:
-    1. Farmer already exists (found in Phase 1 or created in Phase 2)
+    1. Farmer already exists (found in Phase 1 or created in Phase 3)
     2. Create RICE_BIGGROWER_2026 form_submission + form_responses
-    3. Show success toast, reset to Phase 1
+    3. Show success modal with confirmation, reset on user action
 ```
 
 ## WeWeb Configuration
@@ -49,9 +57,10 @@ Phase 3: SURVEY (6 steps)
 | Event | Payload | When |
 |-------|---------|------|
 | `survey-completed` | `{ submissionId, farmerId, isNewUser }` | Successful submission |
-| `survey-closed` | `{}` | User clicks cancel |
+| `survey-closed` | `{}` | User confirms cancel via modal |
+| `profile-updated` | `{ farmerId, updatedFields }` | Farmer profile edited and saved |
 | `error` | `{ message }` | Any error during submission |
-| `phase-changed` | `{ phase }` | Transition between tel_lookup/signup/survey |
+| `phase-changed` | `{ phase }` | Transition between tel_lookup/profile_review/signup/survey |
 | `step-changed` | `{ step }` | Navigation between survey steps 1-6 |
 
 ### Exposed Actions
@@ -64,7 +73,7 @@ Phase 3: SURVEY (6 steps)
 
 | Variable | Type | Description |
 |----------|------|-------------|
-| `currentPhase` | string | `tel_lookup`, `signup`, or `survey` |
+| `currentPhase` | string | `tel_lookup`, `profile_review`, `signup`, or `survey` |
 | `currentStep` | number | 1-6 within the survey phase |
 | `farmerName` | string | Name of the found/registered farmer |
 | `isSubmitting` | boolean | True during submission API calls |
@@ -130,6 +139,7 @@ These values are baked into the component and match existing database records:
 All **survey field IDs** (A1-A9, B, C, D, E1-E7) are hardcoded UUIDs matching rows in `form_fields` for the RICE_BIGGROWER_2026 template. The component does not fetch the form structure at runtime.
 
 All **option lists** are also hardcoded:
+- 14 rice varieties with "other" option (A6) — select dropdown, not free-text
 - 12 months (A3)
 - 39 weed species (B1)
 - 9 insect/pest species (C1)
@@ -229,10 +239,12 @@ Each survey step (1-5) has a navigation bar with three controls:
 | Position | Button | Action |
 |----------|--------|--------|
 | Left | **ย้อนกลับ** (Back) | Go to previous step. Hidden on step 1. |
-| Center | **ยกเลิก** (Cancel) | Reset everything and return to Phase 1 (tel lookup). Fires `survey-closed` trigger. |
+| Center | **ยกเลิก** (Cancel) | Shows confirmation modal. On confirm: reset and return to Phase 1. Fires `survey-closed` trigger. |
 | Right | **ถัดไป** (Next) | Validate current step and advance. |
 
-Step 6 (review) has a single full-width "ยืนยันและส่งแบบสอบถาม" submit button instead.
+Step 6 (review) has a single full-width "ยืนยันและส่งแบบสอบถาม" submit button. Edit buttons on each review card are styled as secondary buttons for visibility.
+
+After successful submission, a success modal is shown. The interviewer clicks "กลับหน้าหลัก" to reset to Phase 1.
 
 ## Address Cascading Selects (Phase 2)
 
@@ -249,11 +261,12 @@ Selecting a province clears the district and subdistrict. Selecting a district c
 | Phase/Step | Rule |
 |------------|------|
 | Phase 1 | Phone must be 9-10 digits after stripping formatting |
-| Phase 2 | All fields required: firstname, lastname, province, district, subdistrict, at least 1 crop, area > 0 |
-| Step 1 (A) | A1: 15-99, A2: >= 1, A3: selected, A4: >= 1, A5: 1-4, A6: >= 1 row with variety filled, A7/A8/A9: >= 0 |
+| Phase 2 (Profile) | All fields required: firstname, lastname, province, district, subdistrict, at least 1 crop, area > 0 |
+| Phase 3 (Signup) | Same as Phase 2 |
+| Step 1 (A) | A1: 15-99, A2: >= 1, A3: selected, A4: >= 1, A5: 1-4, A6: >= 1 row with variety selected (if "other", custom name required), A7/A8/A9: >= 0 |
 | Steps 2-4 (B/C/D) | If an item is checked, its damage and control_difficulty ratings are required. If stages apply, at least one stage must be selected. |
-| Step 5 (E) | E7 investment plan is required. E6 percentages warn (but don't block) if they don't sum to 100. |
-| Step 6 | Review only. Submit triggers the full write flow. |
+| Step 5 (E) | E7 investment plan is required. If sprays > 0, each application must have product, type, and amount. E6 percentages warn (but don't block) if they don't sum to 100. |
+| Step 6 | Review only. Submit re-validates ALL steps 1-5 before writing. If any step fails, user is navigated back to that step. |
 
 ## Notifications
 

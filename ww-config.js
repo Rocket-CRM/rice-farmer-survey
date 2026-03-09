@@ -86,6 +86,11 @@ export default {
       event: { message: '' },
     },
     {
+      name: 'profile-updated',
+      label: { en: 'Profile updated' },
+      event: { farmerId: '', updatedFields: [] },
+    },
+    {
       name: 'phase-changed',
       label: { en: 'Phase changed' },
       event: { phase: '' },
