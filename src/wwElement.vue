@@ -115,7 +115,7 @@
               <PolarisSelect
                 label="ตำบล *"
                 :options="subdistricts"
-                :modelValue="subdistricts.find(s => s.label === signupData.subdistrict)?.value || ''"
+                :modelValue="signupData.subdistrict_id"
                 @update:modelValue="onSubdistrictChange($event)"
                 :error="signupErrors.subdistrict"
                 placeholder="เลือกตำบล"
@@ -207,7 +207,7 @@
               <PolarisSelect
                 label="ตำบล *"
                 :options="profileSubdistricts"
-                :modelValue="profileSubdistricts.find(s => s.label === profileData.subdistrict)?.value || ''"
+                :modelValue="profileData.subdistrict_id"
                 @update:modelValue="onProfileSubdistrictChange($event)"
                 :error="profileErrors.subdistrict"
                 placeholder="เลือกตำบล"
@@ -743,6 +743,7 @@ export default {
       subdistrict: '',
       province_id: null,
       district_id: null,
+      subdistrict_id: null,
       crop: [],
       area: null,
     })
@@ -769,6 +770,7 @@ export default {
       signupData.district = ''
       signupData.district_id = null
       signupData.subdistrict = ''
+      signupData.subdistrict_id = null
       if (!provinceId) return
       const client = supabase.value
       if (!client) return
@@ -783,6 +785,7 @@ export default {
     async function fetchSubdistricts(districtId) {
       subdistricts.value = []
       signupData.subdistrict = ''
+      signupData.subdistrict_id = null
       if (!districtId) return
       const client = supabase.value
       if (!client) return
@@ -805,12 +808,27 @@ export default {
       const dist = districts.value.find(d => d.value === val)
       signupData.district = dist?.label || ''
       signupData.district_id = val
+      signupData.subdistrict_id = null
+      signupData.subdistrict = ''
       fetchSubdistricts(val)
     }
 
     function onSubdistrictChange(val) {
       const sub = subdistricts.value.find(s => s.value === val)
       signupData.subdistrict = sub?.label || ''
+      signupData.subdistrict_id = val
+    }
+
+    async function getNextAddressCode() {
+      const client = supabase.value
+      if (!client) return 1
+      const { data } = await client
+        .from('user_address')
+        .select('code')
+        .order('code', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      return (data?.code || 0) + 1
     }
 
     // ─── Profile edit state (for existing farmers) ───
@@ -822,6 +840,7 @@ export default {
       subdistrict: '',
       province_id: null,
       district_id: null,
+      subdistrict_id: null,
       crop: [],
       area: null,
     })
@@ -836,6 +855,8 @@ export default {
       debugLog(`Fetching profile for user: ${userId}`)
 
       try {
+        if (!provinces.value.length) await fetchProvinces()
+
         const { data: addrData } = await client
           .from('user_address')
           .select('id, city, district, subdistrict')
@@ -845,20 +866,32 @@ export default {
 
         if (addrData) {
           profileAddressId.value = addrData.id
-          profileData.city = addrData.city || ''
-          profileData.district = addrData.district || ''
-          profileData.subdistrict = addrData.subdistrict || ''
+          const storedProvinceId = addrData.city || null
+          const storedDistrictId = addrData.district || null
+          const storedSubdistrictId = addrData.subdistrict || null
 
-          const matchedProvince = provinces.value.find(p => p.label === addrData.city)
-          if (matchedProvince) {
-            profileData.province_id = matchedProvince.value
-            await fetchProfileDistricts(matchedProvince.value)
-            const matchedDistrict = profileDistricts.value.find(d => d.label === addrData.district)
-            if (matchedDistrict) {
-              profileData.district_id = matchedDistrict.value
-              await fetchProfileSubdistricts(matchedDistrict.value)
+          if (storedProvinceId) {
+            profileData.province_id = storedProvinceId
+            const prov = provinces.value.find(p => p.value === storedProvinceId)
+            profileData.city = prov?.label || storedProvinceId
+
+            await fetchProfileDistricts(storedProvinceId)
+
+            if (storedDistrictId) {
+              profileData.district_id = storedDistrictId
+              const dist = profileDistricts.value.find(d => d.value === storedDistrictId)
+              profileData.district = dist?.label || storedDistrictId
+
+              await fetchProfileSubdistricts(storedDistrictId)
+
+              if (storedSubdistrictId) {
+                profileData.subdistrict_id = storedSubdistrictId
+                const sub = profileSubdistricts.value.find(s => s.value === storedSubdistrictId)
+                profileData.subdistrict = sub?.label || storedSubdistrictId
+              }
             }
           }
+          debugLog(`Address loaded: province=${storedProvinceId}, district=${storedDistrictId}, subdistrict=${storedSubdistrictId}`)
         }
 
         const { data: subData } = await client
@@ -889,6 +922,7 @@ export default {
         debugLog('Profile fetched successfully')
       } catch (err) {
         debugLog(`Profile fetch error: ${err?.message}`)
+        showNotification('error', 'ไม่สามารถโหลดข้อมูลโปรไฟล์ได้')
       }
     }
 
@@ -929,6 +963,7 @@ export default {
       profileData.district = ''
       profileData.district_id = null
       profileData.subdistrict = ''
+      profileData.subdistrict_id = null
       fetchProfileDistricts(val)
     }
 
@@ -937,12 +972,14 @@ export default {
       profileData.district = dist?.label || ''
       profileData.district_id = val
       profileData.subdistrict = ''
+      profileData.subdistrict_id = null
       fetchProfileSubdistricts(val)
     }
 
     function onProfileSubdistrictChange(val) {
       const sub = profileSubdistricts.value.find(s => s.value === val)
       profileData.subdistrict = sub?.label || ''
+      profileData.subdistrict_id = val
     }
 
     function toggleProfileCrop(value, checked) {
@@ -957,9 +994,9 @@ export default {
       const errs = {}
       if (!profileData.firstname?.trim()) errs.firstname = 'กรุณากรอกชื่อ'
       if (!profileData.lastname?.trim()) errs.lastname = 'กรุณากรอกนามสกุล'
-      if (!profileData.city?.trim()) errs.city = 'กรุณาเลือกจังหวัด'
-      if (!profileData.district?.trim()) errs.district = 'กรุณาเลือกอำเภอ'
-      if (!profileData.subdistrict?.trim()) errs.subdistrict = 'กรุณาเลือกตำบล'
+      if (!profileData.province_id) errs.city = 'กรุณาเลือกจังหวัด'
+      if (!profileData.district_id) errs.district = 'กรุณาเลือกอำเภอ'
+      if (!profileData.subdistrict_id) errs.subdistrict = 'กรุณาเลือกตำบล'
       if (!profileData.crop?.length) errs.crop = 'กรุณาเลือกพืชที่ปลูกอย่างน้อย 1 ชนิด'
       if (!profileData.area || profileData.area <= 0) errs.area = 'กรุณากรอกพื้นที่'
 
@@ -973,6 +1010,7 @@ export default {
 
       isUpdatingProfile.value = true
       const farmerId = farmerUser.value?.id
+      const errors = []
 
       try {
         const client = supabase.value
@@ -985,38 +1023,74 @@ export default {
           .update({ firstname: profileData.firstname, lastname: profileData.lastname })
           .eq('id', farmerId)
           .eq('merchant_id', MERCHANT_ID)
-        if (userErr) debugLog(`Name update warning: ${userErr.message}`)
+        if (userErr) errors.push(`ชื่อ: ${userErr.message}`)
+
+        const addressPayload = {
+          city: String(profileData.province_id),
+          district: String(profileData.district_id),
+          subdistrict: String(profileData.subdistrict_id),
+        }
 
         if (profileAddressId.value) {
           const { error: addrErr } = await client
             .from('user_address')
-            .update({
-              city: profileData.city,
-              district: profileData.district,
-              subdistrict: profileData.subdistrict,
-            })
+            .update(addressPayload)
             .eq('id', profileAddressId.value)
-          if (addrErr) debugLog(`Address update warning: ${addrErr.message}`)
+          if (addrErr) errors.push(`ที่อยู่: ${addrErr.message}`)
         } else {
-          await client.from('user_address').insert({
+          const nextCode = await getNextAddressCode()
+          const { error: addrErr } = await client.from('user_address').insert({
+            ...addressPayload,
+            code: nextCode,
             user_id: farmerId,
             merchant_id: MERCHANT_ID,
-            city: profileData.city,
-            district: profileData.district,
-            subdistrict: profileData.subdistrict,
           })
+          if (addrErr) errors.push(`ที่อยู่: ${addrErr.message}`)
         }
 
         if (profileSubmissionId.value) {
-          await client.from('form_responses')
+          const { error: cropErr } = await client.from('form_responses')
             .update({ array_value: profileData.crop })
             .eq('submission_id', profileSubmissionId.value)
             .eq('field_id', CROP_FIELD_ID)
+          if (cropErr) errors.push(`พืช: ${cropErr.message}`)
 
-          await client.from('form_responses')
+          const { error: areaErr } = await client.from('form_responses')
             .update({ text_value: String(profileData.area) })
             .eq('submission_id', profileSubmissionId.value)
             .eq('field_id', AREA_FIELD_ID)
+          if (areaErr) errors.push(`พื้นที่: ${areaErr.message}`)
+        } else {
+          const { data: newSub, error: subErr } = await client
+            .from('form_submissions')
+            .insert({
+              form_id: USER_PROFILE_FORM_ID,
+              merchant_id: MERCHANT_ID,
+              user_id: farmerId,
+              status: 'completed',
+              source: 'field_interview',
+              submitted_at: new Date().toISOString(),
+              ref_userid: props.content?.userId || null,
+            })
+            .select('id')
+            .single()
+
+          if (subErr) {
+            errors.push(`โปรไฟล์: ${subErr.message}`)
+          } else if (newSub) {
+            profileSubmissionId.value = newSub.id
+            const { error: respErr } = await client.from('form_responses').insert([
+              { submission_id: newSub.id, field_id: CROP_FIELD_ID, array_value: profileData.crop },
+              { submission_id: newSub.id, field_id: AREA_FIELD_ID, text_value: String(profileData.area) },
+            ])
+            if (respErr) errors.push(`ข้อมูลพืช/พื้นที่: ${respErr.message}`)
+          }
+        }
+
+        if (errors.length) {
+          debugLog(`Profile update errors: ${errors.join('; ')}`)
+          showNotification('error', `บันทึกไม่สำเร็จบางส่วน: ${errors.join(', ')}`)
+          return
         }
 
         farmerUser.value = { ...farmerUser.value, firstname: profileData.firstname, lastname: profileData.lastname }
@@ -1180,6 +1254,7 @@ export default {
       profileData.subdistrict = ''
       profileData.province_id = null
       profileData.district_id = null
+      profileData.subdistrict_id = null
       profileData.crop = []
       profileData.area = null
       profileAddressId.value = null
@@ -1217,9 +1292,9 @@ export default {
       const errs = {}
       if (!signupData.firstname?.trim()) errs.firstname = 'กรุณากรอกชื่อ'
       if (!signupData.lastname?.trim()) errs.lastname = 'กรุณากรอกนามสกุล'
-      if (!signupData.city?.trim()) errs.city = 'กรุณาเลือกจังหวัด'
-      if (!signupData.district?.trim()) errs.district = 'กรุณาเลือกอำเภอ'
-      if (!signupData.subdistrict?.trim()) errs.subdistrict = 'กรุณาเลือกตำบล'
+      if (!signupData.province_id) errs.city = 'กรุณาเลือกจังหวัด'
+      if (!signupData.district_id) errs.district = 'กรุณาเลือกอำเภอ'
+      if (!signupData.subdistrict_id) errs.subdistrict = 'กรุณาเลือกตำบล'
       if (!signupData.crop?.length) errs.crop = 'กรุณาเลือกพืชที่ปลูกอย่างน้อย 1 ชนิด'
       if (!signupData.area || signupData.area <= 0) errs.area = 'กรุณากรอกพื้นที่'
 
@@ -1256,14 +1331,16 @@ export default {
         const farmerId = newUser.id
         debugLog(`User created: ${farmerId}`)
 
+        const nextCode = await getNextAddressCode()
         const { error: addrErr } = await client
           .from('user_address')
           .insert({
+            code: nextCode,
             user_id: farmerId,
             merchant_id: MERCHANT_ID,
-            city: signupData.city,
-            district: signupData.district,
-            subdistrict: signupData.subdistrict,
+            city: String(signupData.province_id),
+            district: String(signupData.district_id),
+            subdistrict: String(signupData.subdistrict_id),
           })
         if (addrErr) debugLog(`Address insert warning: ${addrErr.message}`)
         else debugLog('Address saved')
