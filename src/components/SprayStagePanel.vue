@@ -44,6 +44,7 @@
                     :modelValue="prod.product"
                     @update:modelValue="updateProduct(sIdx, pIdx, 'product', $event)"
                     placeholder="ระบุชื่อยา"
+                    :error="fieldError(sIdx, pIdx, 'product')"
                   />
                   <PolarisTextField
                     label="E3. ศัตรูพืชเป้าหมาย"
@@ -58,6 +59,7 @@
                     suffix="มล./ไร่"
                     :modelValue="prod.amount"
                     @update:modelValue="updateProduct(sIdx, pIdx, 'amount', $event ? Number($event) : null)"
+                    :error="fieldError(sIdx, pIdx, 'amount')"
                   />
                 </div>
 
@@ -68,6 +70,7 @@
                     :name="`sat-${stageKey}-${sIdx}-${pIdx}`"
                     lowLabel="1=ไม่พอใจ"
                     highLabel="5=พอใจมาก"
+                    :reversed="true"
                     @update:modelValue="updateProduct(sIdx, pIdx, 'satisfaction', $event)"
                   />
                 </div>
@@ -103,6 +106,7 @@ export default {
     stageKey: { type: String, required: true },
     stageLabel: { type: String, required: true },
     modelValue: { type: Object, default: () => ({ total_sprays: 0, sessions: [] }) },
+    errors: { type: Object, default: () => ({}) },
   },
   emits: ['update:modelValue'],
   computed: {
@@ -125,6 +129,10 @@ export default {
     },
   },
   methods: {
+    fieldError(sIdx, pIdx, field) {
+      const key = `spray_${this.stageKey}_${sIdx}_${pIdx}_${field}`
+      return this.errors[key] ? 'กรุณากรอกข้อมูลนี้' : undefined
+    },
     emitUpdate(sessions, totalSprays) {
       this.$emit('update:modelValue', {
         total_sprays: totalSprays ?? this.stageData.total_sprays,

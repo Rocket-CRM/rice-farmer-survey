@@ -318,21 +318,21 @@
               <PolarisText v-if="stepErrors.a6_rice_varieties" variant="bodySm" color="critical">{{ stepErrors.a6_rice_varieties }}</PolarisText>
 
               <PolarisTextField
-                label="A7. ผลผลิตต่อไร่จากการเก็บเกี่ยวครั้งล่าสุด"
+                label="A7. ผลผลิตต่อไร่จากการเก็บเกี่ยวครั้งล่าสุด (กิโลกรัม/ไร่)"
                 type="number" required :min="0" suffix="กิโลกรัม/ไร่"
                 :modelValue="surveyData.a7_yield_per_rai"
                 @update:modelValue="surveyData.a7_yield_per_rai = $event ? Number($event) : null"
                 :error="stepErrors.a7_yield_per_rai"
               />
               <PolarisTextField
-                label="A8. ราคาขายข้าวจากการเก็บเกี่ยวครั้งล่าสุด"
+                label="A8. ราคาขายข้าวจากการเก็บเกี่ยวครั้งล่าสุด (บาท/ตัน/เกวียน)"
                 type="number" required :min="0" suffix="บาท/ตัน/เกวียน"
                 :modelValue="surveyData.a8_selling_price"
                 @update:modelValue="surveyData.a8_selling_price = $event ? Number($event) : null"
                 :error="stepErrors.a8_selling_price"
               />
               <PolarisTextField
-                label="A9. ราคาข้าวขั้นต่ำที่จะไม่ขาดทุน"
+                label="A9. ราคาข้าวขั้นต่ำที่จะไม่ขาดทุน (บาท/ตัน/เกวียน)"
                 type="number" required :min="0" suffix="บาท/ตัน/เกวียน"
                 :modelValue="surveyData.a9_breakeven_price"
                 @update:modelValue="surveyData.a9_breakeven_price = $event ? Number($event) : null"
@@ -402,6 +402,7 @@
             :stageKey="stage.key"
             :stageLabel="stage.label"
             :modelValue="surveyData.e1_e5_spray_applications?.stages?.[stage.key]"
+            :errors="stepErrors"
             @update:modelValue="updateSprayStage(stage.key, $event)"
           />
 

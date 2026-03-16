@@ -8,7 +8,7 @@
         class="rating-scale__option"
         :class="{
           'rating-scale__option--selected': modelValue === min + n - 1,
-          [`rating-scale__option--level-${min + n - 1}`]: modelValue === min + n - 1,
+          [`rating-scale__option--level-${reversed ? (max + min - (min + n - 1)) : (min + n - 1)}`]: modelValue === min + n - 1,
         }"
       >
         <input
@@ -34,6 +34,7 @@ export default {
     lowLabel: { type: String, default: '' },
     highLabel: { type: String, default: '' },
     name: { type: String, default: () => `rating-${Math.random().toString(36).slice(2, 9)}` },
+    reversed: { type: Boolean, default: false },
   },
   emits: ['update:modelValue'],
 }

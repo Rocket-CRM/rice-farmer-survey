@@ -1,10 +1,26 @@
 # Rice Farmer Survey — Changelog & Progress
 
+Single reference for what changed (read this .md instead of re-explaining in prompts to save tokens).
+
 ## Current State
 - **Branch**: `main`
-- **Latest commit**: `1448748` — Fix address data format and profile save bugs
+- **Latest commit**: (see latest section below)
 - **Supabase project**: `wkevmsedchftztoolkmi` (CRM)
 - **Merchant ID**: `8f67aa08-dfce-454d-bfb1-effc4ee45f1f`
+
+---
+
+## V2 Feedback Round 2 (Completed)
+
+| # | Item | Change | Files |
+|---|------|--------|-------|
+| 1 | **A7/A8/A9 units on labels** | Units added in label text so they show when field is empty: A7 `(กิโลกรัม/ไร่)`, A8/A9 `(บาท/ตัน/เกวียน)`. `suffix` kept for in-input display. | `wwElement.vue` |
+| 2 | **Weed grouping** | WEED_OPTIONS merged into ~20 grouped rows; one checkbox per group (e.g. "หญ้าข้าวนก, หญ้าพุ่มพวง, หญ้าคอมมิวนิสต์"). Removed `group` and `--group-start` from AssessmentMatrix. | `constants.js`, `AssessmentMatrix.vue` |
+| 3 | **Rating colors context-aware** | `RatingScale` has `reversed` prop: default 1=green/5=red (damage); reversed 1=red/5=green (satisfaction). E5 satisfaction uses `:reversed="true"`. | `RatingScale.vue`, `SprayStagePanel.vue` |
+| 4 | **Section E per-field errors** | Step 5 validation sets keys `spray_{stageKey}_{s}_{p}_product` and `_amount`. `SprayStagePanel` receives `errors` prop and shows `:error` on E2 (product) and E4 (amount) PolarisTextField. | `wwElement.vue`, `SprayStagePanel.vue` |
+| 5 | **E3/E4 order** | E3 = ศัตรูพืชเป้าหมาย (target pest), E4 = ปริมาณที่ใช้ (amount). Order in UI and data unchanged after fix. | `SprayStagePanel.vue` |
+
+Other V2 work already in codebase: duplicate disease "โรคใบขีดโน้มตาล" removed from DISEASE_OPTIONS; Section E restructured to sessions → products (E1 = spray count, each session has multiple products with E2–E5).
 
 ---
 
