@@ -8,7 +8,10 @@
         v-for="(item, idx) in items"
         :key="item.code"
         class="assessment-matrix__item"
-        :class="{ 'assessment-matrix__item--found': localItems[idx]?.found }"
+        :class="{
+          'assessment-matrix__item--found': localItems[idx]?.found,
+          'assessment-matrix__item--group-start': item.group && idx > 0 && items[idx - 1]?.group !== item.group,
+        }"
       >
         <div class="assessment-matrix__check-row">
           <PolarisCheckbox
@@ -157,6 +160,21 @@ export default {
 
     &--found {
       border-color: var(--p-color-border-focus);
+    }
+
+    &--group-start {
+      margin-top: var(--p-space-300);
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: calc(-1 * var(--p-space-200));
+        left: 10%;
+        right: 10%;
+        height: 1px;
+        background: var(--p-color-border);
+      }
     }
   }
 

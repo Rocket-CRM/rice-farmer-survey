@@ -319,7 +319,7 @@
 
               <PolarisTextField
                 label="A7. ผลผลิตต่อไร่จากการเก็บเกี่ยวครั้งล่าสุด"
-                type="number" required :min="0" suffix="กก./ไร่"
+                type="number" required :min="0" suffix="กิโลกรัม/ไร่"
                 :modelValue="surveyData.a7_yield_per_rai"
                 @update:modelValue="surveyData.a7_yield_per_rai = $event ? Number($event) : null"
                 :error="stepErrors.a7_yield_per_rai"
@@ -517,7 +517,7 @@
                 <div class="rice-survey__review-item"><span>ปลูกข้าวมา</span><strong>{{ surveyData.a4_farming_years }} ปี</strong></div>
                 <div class="rice-survey__review-item"><span>ฤดู/ปี</span><strong>{{ surveyData.a5_seasons_per_year }}</strong></div>
                 <div class="rice-survey__review-item"><span>พันธุ์ข้าว</span><strong>{{ varietySummary }}</strong></div>
-                <div class="rice-survey__review-item"><span>ผลผลิต/ไร่</span><strong>{{ surveyData.a7_yield_per_rai }} กก.</strong></div>
+                <div class="rice-survey__review-item"><span>ผลผลิต/ไร่</span><strong>{{ surveyData.a7_yield_per_rai }} กิโลกรัม/ไร่</strong></div>
                 <div class="rice-survey__review-item"><span>ราคาขาย</span><strong>{{ surveyData.a8_selling_price }} บาท/ตัน/เกวียน</strong></div>
                 <div class="rice-survey__review-item"><span>จุดคุ้มทุน</span><strong>{{ surveyData.a9_breakeven_price }} บาท/ตัน/เกวียน</strong></div>
               </div>
@@ -549,7 +549,7 @@
             </PolarisCardHeader>
             <PolarisCardSection>
               <PolarisBlockStack gap="200">
-                <PolarisText variant="bodySm">จำนวนการฉีดพ่นทั้งหมด: {{ totalSprays }} ครั้ง</PolarisText>
+                <PolarisText variant="bodySm">จำนวนการฉีดพ่นทั้งหมด: {{ totalSprays }} ครั้ง ({{ totalProducts }} รายการยา)</PolarisText>
                 <PolarisText variant="bodySm">ค่าใช้จ่ายรวม: {{ surveyData.e6_total_cost || '-' }} บาท</PolarisText>
                 <PolarisText variant="bodySm">แผนลงทุน: {{ investmentLabel(surveyData.e7_investment_plan) }}</PolarisText>
               </PolarisBlockStack>
@@ -1179,6 +1179,13 @@ export default {
       return Object.values(stages).reduce((sum, s) => sum + (s?.total_sprays || 0), 0)
     })
 
+    const totalProducts = computed(() => {
+      const stages = surveyData.e1_e5_spray_applications?.stages || {}
+      return Object.values(stages).reduce((sum, s) => {
+        return sum + (s?.sessions || []).reduce((ps, sess) => ps + (sess?.products?.length || 0), 0)
+      }, 0)
+    })
+
     // ─── Debug ───
     function debugLog(message) {
       const time = new Date().toLocaleTimeString('th-TH')
@@ -1452,22 +1459,21 @@ export default {
 
         const stages = surveyData.e1_e5_spray_applications?.stages || {}
         Object.entries(stages).forEach(([stageKey, stageData]) => {
-          const sprays = stageData?.total_sprays || 0
-          const apps = stageData?.applications || []
-          for (let i = 0; i < sprays; i++) {
-            const app = apps[i]
-            if (!app) continue
-            if (!app.product?.trim())
-              errs[`spray_${stageKey}_${i}_product`] = 'true'
-            if (!app.type)
-              errs[`spray_${stageKey}_${i}_type`] = 'true'
-            if (app.amount == null || app.amount === '')
-              errs[`spray_${stageKey}_${i}_amount`] = 'true'
+          const count = stageData?.total_sprays || 0
+          const sessions = stageData?.sessions || []
+          for (let s = 0; s < count; s++) {
+            const products = sessions[s]?.products || []
+            products.forEach((prod, p) => {
+              if (!prod.product?.trim())
+                errs[`spray_${stageKey}_${s}_${p}_product`] = 'true'
+              if (prod.amount == null || prod.amount === '')
+                errs[`spray_${stageKey}_${s}_${p}_amount`] = 'true'
+            })
           }
         })
         const sprayErrors = Object.keys(errs).filter(k => k.startsWith('spray_'))
         if (sprayErrors.length) {
-          errs._spray = 'กรุณากรอกข้อมูลสารที่ใช้ให้ครบทุกครั้งที่ฉีดพ่น'
+          errs._spray = 'กรุณากรอกชื่อยาและปริมาณให้ครบทุกรายการ'
         }
       }
 
@@ -1759,7 +1765,7 @@ export default {
       currentStepTitle, progressPct,
       monthOptions, weedOptions, insectOptions, diseaseOptions,
       growthStages, investmentOptions, cropOptions,
-      costPctSum, varietySummary, totalSprays,
+      costPctSum, varietySummary, totalSprays, totalProducts,
       lookupFarmer, goToSignup, goToProfileReview, startSurvey,
       validateAndCreateUser, isCreatingUser,
       profileData, profileErrors, isUpdatingProfile,

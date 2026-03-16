@@ -7,49 +7,76 @@
           <PolarisTextField
             label="E1. จำนวนครั้งที่ฉีดพ่นในระยะนี้"
             type="number"
-            :modelValue="stageData?.total_sprays ?? 0"
+            :modelValue="stageData.total_sprays"
             @update:modelValue="updateTotalSprays(Number($event) || 0)"
             :min="0"
             :max="20"
             suffix="ครั้ง"
           />
 
-          <template v-if="(stageData?.total_sprays || 0) > 0">
+          <template v-if="stageData.total_sprays > 0">
             <div
-              v-for="(app, idx) in applications"
-              :key="idx"
-              class="spray-panel__app"
+              v-for="(session, sIdx) in sessions"
+              :key="sIdx"
+              class="spray-panel__session"
             >
-              <PolarisText variant="headingSm">ครั้งที่ {{ idx + 1 }}</PolarisText>
-              <div class="spray-panel__fields">
-                <PolarisTextField
-                  label="E2. ชื่อผลิตภัณฑ์/ยี่ห้อ"
-                  :modelValue="app.product"
-                  @update:modelValue="updateApp(idx, 'product', $event)"
-                  placeholder="ระบุชื่อยา"
-                />
-                <PolarisSelect
-                  label="E3. ประเภทสาร"
-                  :options="typeOptions"
-                  :modelValue="app.type"
-                  @update:modelValue="updateApp(idx, 'type', $event)"
-                />
-                <PolarisTextField
-                  label="E4. ปริมาณที่ใช้"
-                  type="number"
-                  :min="0"
-                  suffix="มล./ไร่"
-                  :modelValue="app.amount"
-                  @update:modelValue="updateApp(idx, 'amount', $event ? Number($event) : null)"
-                />
-                <PolarisTextField
-                  label="E5. จำนวนน้ำ (ลิตร/ไร่)"
-                  type="number"
-                  :modelValue="app.water_liters"
-                  @update:modelValue="updateApp(idx, 'water_liters', $event ? Number($event) : null)"
-                  suffix="ลิตร/ไร่"
-                />
+              <PolarisText variant="headingSm">ครั้งที่ {{ sIdx + 1 }}</PolarisText>
+
+              <div
+                v-for="(prod, pIdx) in session.products"
+                :key="pIdx"
+                class="spray-panel__product"
+              >
+                <div class="spray-panel__product-header">
+                  <PolarisText variant="bodySm" fontWeight="semibold">ยาที่ {{ pIdx + 1 }}</PolarisText>
+                  <PolarisButton
+                    v-if="session.products.length > 1"
+                    variant="plain"
+                    tone="critical"
+                    size="slim"
+                    @click="removeProduct(sIdx, pIdx)"
+                  >ลบ</PolarisButton>
+                </div>
+
+                <div class="spray-panel__fields">
+                  <PolarisTextField
+                    label="E2. ชื่อผลิตภัณฑ์/ยี่ห้อ"
+                    :modelValue="prod.product"
+                    @update:modelValue="updateProduct(sIdx, pIdx, 'product', $event)"
+                    placeholder="ระบุชื่อยา"
+                  />
+                  <PolarisTextField
+                    label="E3. ศัตรูพืชเป้าหมาย"
+                    :modelValue="prod.pest_target"
+                    @update:modelValue="updateProduct(sIdx, pIdx, 'pest_target', $event)"
+                    placeholder="ระบุศัตรูพืช"
+                  />
+                  <PolarisTextField
+                    label="E4. ปริมาณที่ใช้"
+                    type="number"
+                    :min="0"
+                    suffix="มล./ไร่"
+                    :modelValue="prod.amount"
+                    @update:modelValue="updateProduct(sIdx, pIdx, 'amount', $event ? Number($event) : null)"
+                  />
+                </div>
+
+                <div class="spray-panel__satisfaction">
+                  <PolarisText variant="bodySm" fontWeight="semibold">E5. ความพึงพอใจต่อยานี้</PolarisText>
+                  <RatingScale
+                    :modelValue="prod.satisfaction"
+                    :name="`sat-${stageKey}-${sIdx}-${pIdx}`"
+                    lowLabel="1=ไม่พอใจ"
+                    highLabel="5=พอใจมาก"
+                    @update:modelValue="updateProduct(sIdx, pIdx, 'satisfaction', $event)"
+                  />
+                </div>
               </div>
+
+              <PolarisButton
+                size="slim"
+                @click="addProduct(sIdx)"
+              >+ เพิ่มยา</PolarisButton>
             </div>
           </template>
         </PolarisBlockStack>
@@ -61,58 +88,82 @@
 <script>
 import {
   PolarisCard, PolarisCardHeader, PolarisCardSection,
-  PolarisTextField, PolarisSelect, PolarisBlockStack, PolarisText,
+  PolarisTextField, PolarisBlockStack, PolarisText, PolarisButton,
 } from 'polaris-weweb-styles/components'
-import { SPRAY_TYPE_OPTIONS } from '../constants.js'
+import { createEmptyProduct } from '../constants.js'
+import RatingScale from './RatingScale.vue'
 
 export default {
   components: {
     PolarisCard, PolarisCardHeader, PolarisCardSection,
-    PolarisTextField, PolarisSelect, PolarisBlockStack, PolarisText,
+    PolarisTextField, PolarisBlockStack, PolarisText, PolarisButton,
+    RatingScale,
   },
   props: {
     stageKey: { type: String, required: true },
     stageLabel: { type: String, required: true },
-    modelValue: { type: Object, default: () => ({ total_sprays: 0, applications: [] }) },
+    modelValue: { type: Object, default: () => ({ total_sprays: 0, sessions: [] }) },
   },
   emits: ['update:modelValue'],
   computed: {
-    typeOptions() {
-      return SPRAY_TYPE_OPTIONS
-    },
     stageData() {
-      return this.modelValue || { total_sprays: 0, applications: [] }
+      return this.modelValue || { total_sprays: 0, sessions: [] }
     },
-    applications() {
-      const count = this.stageData?.total_sprays || 0
-      const existing = this.stageData?.applications || []
+    sessions() {
+      const count = this.stageData.total_sprays || 0
+      const existing = this.stageData.sessions || []
       const result = []
       for (let i = 0; i < count; i++) {
-        result.push(existing[i] || { product: '', type: '', amount: null, water_liters: null })
+        const s = existing[i]
+        if (s && s.products?.length) {
+          result.push({ products: [...s.products] })
+        } else {
+          result.push({ products: [createEmptyProduct()] })
+        }
       }
       return result
     },
   },
   methods: {
-    updateTotalSprays(count) {
-      const clamped = Math.max(0, Math.min(20, count))
-      const apps = [...(this.stageData?.applications || [])]
-      while (apps.length < clamped) {
-        apps.push({ product: '', type: '', amount: null, water_liters: null })
-      }
+    emitUpdate(sessions, totalSprays) {
       this.$emit('update:modelValue', {
-        total_sprays: clamped,
-        applications: apps.slice(0, clamped),
+        total_sprays: totalSprays ?? this.stageData.total_sprays,
+        sessions,
       })
     },
-    updateApp(idx, field, value) {
-      const apps = this.applications.map((a, i) =>
-        i === idx ? { ...a, [field]: value } : { ...a }
-      )
-      this.$emit('update:modelValue', {
-        total_sprays: this.stageData?.total_sprays || 0,
-        applications: apps,
+    updateTotalSprays(count) {
+      const clamped = Math.max(0, Math.min(20, count))
+      const existing = this.sessions
+      const sessions = []
+      for (let i = 0; i < clamped; i++) {
+        sessions.push(existing[i] || { products: [createEmptyProduct()] })
+      }
+      this.emitUpdate(sessions, clamped)
+    },
+    updateProduct(sIdx, pIdx, field, value) {
+      const sessions = this.sessions.map((s, si) => {
+        if (si !== sIdx) return { products: s.products.map(p => ({ ...p })) }
+        return {
+          products: s.products.map((p, pi) =>
+            pi === pIdx ? { ...p, [field]: value } : { ...p }
+          ),
+        }
       })
+      this.emitUpdate(sessions)
+    },
+    addProduct(sIdx) {
+      const sessions = this.sessions.map((s, si) => {
+        if (si !== sIdx) return { products: s.products.map(p => ({ ...p })) }
+        return { products: [...s.products.map(p => ({ ...p })), createEmptyProduct()] }
+      })
+      this.emitUpdate(sessions)
+    },
+    removeProduct(sIdx, pIdx) {
+      const sessions = this.sessions.map((s, si) => {
+        if (si !== sIdx) return { products: s.products.map(p => ({ ...p })) }
+        return { products: s.products.filter((_, pi) => pi !== pIdx).map(p => ({ ...p })) }
+      })
+      this.emitUpdate(sessions)
     },
   },
 }
@@ -122,14 +173,30 @@ export default {
 @import 'polaris-weweb-styles';
 
 .spray-panel {
-  &__app {
+  &__session {
     display: flex;
     flex-direction: column;
     gap: var(--p-space-300);
-    padding: var(--p-space-300);
+    padding: var(--p-space-400);
     border: var(--p-border-width-025) solid var(--p-color-border);
     border-radius: var(--p-border-radius-200);
     background: var(--p-color-bg-surface-secondary);
+  }
+
+  &__product {
+    display: flex;
+    flex-direction: column;
+    gap: var(--p-space-200);
+    padding: var(--p-space-300);
+    border: var(--p-border-width-025) solid var(--p-color-border);
+    border-radius: var(--p-border-radius-100);
+    background: var(--p-color-bg-surface);
+  }
+
+  &__product-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 
   &__fields {
@@ -138,8 +205,14 @@ export default {
     gap: var(--p-space-300);
 
     @media (min-width: 768px) {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
     }
+  }
+
+  &__satisfaction {
+    display: flex;
+    flex-direction: column;
+    gap: var(--p-space-150);
   }
 }
 </style>

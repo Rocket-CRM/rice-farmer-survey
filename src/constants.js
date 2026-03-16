@@ -43,45 +43,45 @@ export const MONTH_OPTIONS = [
 ]
 
 export const WEED_OPTIONS = [
-  { code: 'weed_01', label: 'หญ้าข้าวนก' },
-  { code: 'weed_02', label: 'หญ้าพุ่มพวง' },
-  { code: 'weed_03', label: 'หญ้าคอมมิวนิสต์' },
-  { code: 'weed_04', label: 'หญ้าข้าวนกสีชมพ' },
-  { code: 'weed_05', label: 'หญ้าข้าวปล้อง' },
-  { code: 'weed_06', label: 'หญ้านก' },
-  { code: 'weed_07', label: 'หญ้าแดง' },
-  { code: 'weed_08', label: 'หญ้ากระดูกไก่' },
-  { code: 'weed_09', label: 'หญ้าก้านธูป' },
-  { code: 'weed_10', label: 'หญ้าสล้าง' },
-  { code: 'weed_11', label: 'หญ้าดอกขาว' },
-  { code: 'weed_12', label: 'หญ้าลิเก' },
-  { code: 'weed_13', label: 'หญ้าไม้กวาด' },
-  { code: 'weed_14', label: 'ผักปอดนา' },
-  { code: 'weed_15', label: 'หญ้าจำปา' },
-  { code: 'weed_16', label: 'ผักพริก' },
-  { code: 'weed_17', label: 'ผักปุ่มปลา' },
-  { code: 'weed_18', label: 'หนวดปลาดุก' },
-  { code: 'weed_19', label: 'หญ้าหนวดแมว' },
-  { code: 'weed_20', label: 'หญ้าไข่กบ' },
-  { code: 'weed_21', label: 'หญ้าไข่เขียด' },
-  { code: 'weed_22', label: 'กกขนาก' },
-  { code: 'weed_23', label: 'หญ้าดอกต่อ' },
-  { code: 'weed_24', label: 'ผือน้อย' },
-  { code: 'weed_25', label: 'กกทราย' },
-  { code: 'weed_26', label: 'กกแดง' },
-  { code: 'weed_27', label: 'หญ้ารังกา' },
-  { code: 'weed_28', label: 'เซ่งใบมน' },
-  { code: 'weed_29', label: 'เทียนนา' },
-  { code: 'weed_30', label: 'โสนคางคก' },
-  { code: 'weed_31', label: 'หญ้าชะกาดน้ำเค็ม' },
-  { code: 'weed_32', label: 'หญ้าชันกาศ' },
-  { code: 'weed_33', label: 'หญ้ากุศลา' },
-  { code: 'weed_34', label: 'ปอวัชพืช' },
-  { code: 'weed_35', label: 'สะอึก' },
-  { code: 'weed_36', label: 'โสนหางไก่' },
-  { code: 'weed_37', label: 'ข้าวดีด' },
-  { code: 'weed_other_1', label: 'อื่นๆ (ระบุ) 1', hasCustomInput: true },
-  { code: 'weed_other_2', label: 'อื่นๆ (ระบุ) 2', hasCustomInput: true },
+  { code: 'weed_01', label: 'หญ้าข้าวนก', group: 1 },
+  { code: 'weed_02', label: 'หญ้าพุ่มพวง', group: 1 },
+  { code: 'weed_03', label: 'หญ้าคอมมิวนิสต์', group: 1 },
+  { code: 'weed_04', label: 'หญ้าข้าวนกสีชมพ', group: 2 },
+  { code: 'weed_05', label: 'หญ้าข้าวปล้อง', group: 2 },
+  { code: 'weed_06', label: 'หญ้านก', group: 2 },
+  { code: 'weed_07', label: 'หญ้าแดง', group: 3 },
+  { code: 'weed_08', label: 'หญ้ากระดูกไก่', group: 3 },
+  { code: 'weed_09', label: 'หญ้าก้านธูป', group: 3 },
+  { code: 'weed_10', label: 'หญ้าสล้าง', group: 3 },
+  { code: 'weed_11', label: 'หญ้าดอกขาว', group: 4 },
+  { code: 'weed_12', label: 'หญ้าลิเก', group: 4 },
+  { code: 'weed_13', label: 'หญ้าไม้กวาด', group: 4 },
+  { code: 'weed_14', label: 'ผักปอดนา', group: 5 },
+  { code: 'weed_15', label: 'หญ้าจำปา', group: 5 },
+  { code: 'weed_16', label: 'ผักพริก', group: 5 },
+  { code: 'weed_17', label: 'ผักปุ่มปลา', group: 5 },
+  { code: 'weed_18', label: 'หนวดปลาดุก', group: 6 },
+  { code: 'weed_19', label: 'หญ้าหนวดแมว', group: 6 },
+  { code: 'weed_20', label: 'หญ้าไข่กบ', group: 6 },
+  { code: 'weed_21', label: 'หญ้าไข่เขียด', group: 6 },
+  { code: 'weed_22', label: 'กกขนาก', group: 7 },
+  { code: 'weed_23', label: 'หญ้าดอกต่อ', group: 7 },
+  { code: 'weed_24', label: 'ผือน้อย', group: 7 },
+  { code: 'weed_25', label: 'กกทราย', group: 8 },
+  { code: 'weed_26', label: 'กกแดง', group: 8 },
+  { code: 'weed_27', label: 'หญ้ารังกา', group: 8 },
+  { code: 'weed_28', label: 'เซ่งใบมน', group: 9 },
+  { code: 'weed_29', label: 'เทียนนา', group: 10 },
+  { code: 'weed_30', label: 'โสนคางคก', group: 11 },
+  { code: 'weed_31', label: 'หญ้าชะกาดน้ำเค็ม', group: 12 },
+  { code: 'weed_32', label: 'หญ้าชันกาศ', group: 13 },
+  { code: 'weed_33', label: 'หญ้ากุศลา', group: 14 },
+  { code: 'weed_34', label: 'ปอวัชพืช', group: 15 },
+  { code: 'weed_35', label: 'สะอึก', group: 16 },
+  { code: 'weed_36', label: 'โสนหางไก่', group: 17 },
+  { code: 'weed_37', label: 'ข้าวดีด', group: 18 },
+  { code: 'weed_other_1', label: 'อื่นๆ (ระบุ) 1', hasCustomInput: true, group: 19 },
+  { code: 'weed_other_2', label: 'อื่นๆ (ระบุ) 2', hasCustomInput: true, group: 19 },
 ]
 
 export const INSECT_OPTIONS = [
@@ -105,7 +105,6 @@ export const DISEASE_OPTIONS = [
   { code: 'disease_06', label: 'โรคใบจุดสีน้ำตาล' },
   { code: 'disease_07', label: 'โรคเมล็ดด่าง' },
   { code: 'disease_08', label: 'โรคไหม้' },
-  { code: 'disease_09', label: 'โรคใบขีดโน้มตาล' },
   { code: 'disease_other_1', label: 'อื่นๆ (ระบุ) 1', hasCustomInput: true },
   { code: 'disease_other_2', label: 'อื่นๆ (ระบุ) 2', hasCustomInput: true },
 ]
@@ -162,6 +161,10 @@ export const SPRAY_TYPE_OPTIONS = [
   { value: 'hormone', label: 'ฮอร์โมนส์' },
   { value: 'other', label: 'อื่นๆ' },
 ]
+
+export function createEmptyProduct() {
+  return { product: '', amount: null, pest_target: '', satisfaction: null }
+}
 
 export const SURVEY_STEPS = [
   { id: 1, key: 'section_a', title: 'A) ข้อมูลทั่วไปเกี่ยวกับการปลูกข้าว' },
@@ -224,10 +227,10 @@ export function initDiseaseAssessment() {
 export function initSprayApplications() {
   return {
     stages: {
-      small_stage:     { total_sprays: 0, applications: [] },
-      tillering_stage: { total_sprays: 0, applications: [] },
-      booting_stage:   { total_sprays: 0, applications: [] },
-      maturity_stage:  { total_sprays: 0, applications: [] },
+      small_stage:     { total_sprays: 0, sessions: [] },
+      tillering_stage: { total_sprays: 0, sessions: [] },
+      booting_stage:   { total_sprays: 0, sessions: [] },
+      maturity_stage:  { total_sprays: 0, sessions: [] },
     },
   }
 }

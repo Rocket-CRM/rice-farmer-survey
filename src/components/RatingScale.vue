@@ -6,7 +6,10 @@
         v-for="n in max - min + 1"
         :key="n"
         class="rating-scale__option"
-        :class="{ 'rating-scale__option--selected': modelValue === min + n - 1 }"
+        :class="{
+          'rating-scale__option--selected': modelValue === min + n - 1,
+          [`rating-scale__option--level-${min + n - 1}`]: modelValue === min + n - 1,
+        }"
       >
         <input
           type="radio"
@@ -83,10 +86,29 @@ export default {
   }
 
   &__option--selected .rating-scale__circle {
-    border-color: var(--p-color-border-focus);
-    background: var(--p-color-bg-surface-selected);
-    color: var(--p-color-text);
+    color: #fff;
     font-weight: var(--p-font-weight-bold);
+  }
+
+  &__option--level-1 .rating-scale__circle {
+    border-color: #22a06b;
+    background: #22a06b;
+  }
+  &__option--level-2 .rating-scale__circle {
+    border-color: #6cc644;
+    background: #6cc644;
+  }
+  &__option--level-3 .rating-scale__circle {
+    border-color: #e2a100;
+    background: #e2a100;
+  }
+  &__option--level-4 .rating-scale__circle {
+    border-color: #e97b2c;
+    background: #e97b2c;
+  }
+  &__option--level-5 .rating-scale__circle {
+    border-color: #d32f2f;
+    background: #d32f2f;
   }
 }
 </style>
