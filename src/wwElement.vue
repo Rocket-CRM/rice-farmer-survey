@@ -681,7 +681,7 @@ export default {
     // ─── Supabase client ───
     const supabase = computed(() => {
       const url = props.content?.supabaseUrl || 'https://wkevmsedchftztoolkmi.supabase.co'
-      const key = props.content?.supabaseAnonKey || ''
+      const key = props.content?.supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrZXZtc2VkY2hmdHp0b29sa21pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1MTM2OTgsImV4cCI6MjA2NjA4OTY5OH0.bd8ELGtX8ACmk_WCxR_tIFljwyHgD3YD4PdBDpD-kSM'
       const token = props.content?.accessToken || ''
       if (!url || !key) return null
       const headers = { 'x-merchant-id': MERCHANT_ID }
