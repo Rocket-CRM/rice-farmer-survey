@@ -10,6 +10,40 @@ Single reference for what changed (read this .md instead of re-explaining in pro
 
 ---
 
+## V3 Feedback — Section E Restructure + Image Capture (In Progress)
+
+### Section E: Cascading Dropdowns
+
+| # | Field | Before | After | Files |
+|---|-------|--------|-------|-------|
+| 1 | **E2** | Free-text "ชื่อผลิตภัณฑ์/ยี่ห้อ" | Dropdown "ชนิดของยา": ยาหญ้า, ยาแมลง, ยาเชื้อรา, ฮอร์โมนส์ | `SprayStagePanel.vue`, `constants.js` |
+| 2 | **E2.1** (new) | N/A | Dropdown "แบรนด์ของยา" filtered by E2 type; hidden for ฮอร์โมนส์; "อื่นๆ" shows free-text | `SprayStagePanel.vue`, `constants.js` |
+| 3 | **E3.1** (new) | Free-text "ศัตรูพืชเป้าหมาย" | Dropdown "ศัตรูพืชเป้าหมาย (หลัก)" filtered by E2 → reuses WEED/INSECT/DISEASE_OPTIONS; hidden for ฮอร์โมนส์ | `SprayStagePanel.vue`, `constants.js` |
+| 4 | **E3.2** (new) | N/A | Dropdown "ศัตรูพืชเป้าหมาย (รอง)" same options as E3.1; hidden for ฮอร์โมนส์ | `SprayStagePanel.vue` |
+| 5 | **E3.3** (new) | N/A | Textbox "ขนาดบรรจุภัณฑ์ที่ซื้อ (กรัม/ซีซี)" free text | `SprayStagePanel.vue` |
+| 6 | **E3.4** (new) | N/A | Number "ซื้อยามาด้วยราคาเท่าไหร่ (บาท)" | `SprayStagePanel.vue` |
+| 7 | **E4** | Same | Unchanged — ปริมาณที่ใช้ (มล./ไร่) | — |
+| 8 | **E5** | Same | Unchanged — ความพึงพอใจ (1-5) | — |
+
+Brand lists: 24 herbicide brands, 23 insecticide brands, 23 fungicide brands (all from customer spec). When E2 = ฮอร์โมนส์, E2.1/E3.1/E3.2 are all hidden.
+
+Product data model changed from `{ product, amount, pest_target, satisfaction }` to `{ pesticide_type, brand, brand_other, pest_primary, pest_secondary, package_size, purchase_price, amount, satisfaction }`.
+
+Validation updated: `pesticide_type` required, `brand` required if not hormone, `brand_other` required if brand = "other", `amount` required.
+
+### User Image Capture (New Feature)
+
+| # | Item | Detail | Files |
+|---|------|--------|-------|
+| 1 | **Signup phase** | "ถ่ายรูป / เลือกรูป" button added below พื้นที่เพาะปลูก; uses `<input type="file" accept="image/*" capture="environment">` for camera + gallery | `wwElement.vue` |
+| 2 | **Profile review phase** | Same image picker; pre-populated with existing image from `user_accounts.image` | `wwElement.vue` |
+| 3 | **Upload** | Images uploaded to Supabase Storage `images` bucket at `user-photos/{merchant_id}/{user_id}.{ext}`; public URL saved to `user_accounts.image` column (already exists) | `wwElement.vue` |
+| 4 | **Lookup** | `lookupFarmer()` now fetches `image` column; shown in profile review | `wwElement.vue` |
+
+No database changes needed (column + bucket + RLS already exist).
+
+---
+
 ## V2 Feedback Round 2 (Completed)
 
 | # | Item | Change | Files |

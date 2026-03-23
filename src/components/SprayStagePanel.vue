@@ -39,18 +39,66 @@
                 </div>
 
                 <div class="spray-panel__fields">
+                  <PolarisSelect
+                    label="E2. ชนิดของยา"
+                    :options="sprayTypeOptions"
+                    :modelValue="prod.pesticide_type"
+                    @update:modelValue="onTypeChange(sIdx, pIdx, $event)"
+                    placeholder="เลือกชนิดยา"
+                    :error="fieldError(sIdx, pIdx, 'pesticide_type')"
+                  />
+
+                  <template v-if="prod.pesticide_type && prod.pesticide_type !== 'hormone'">
+                    <PolarisSelect
+                      label="E2.1 แบรนด์ของยา"
+                      :options="getBrandOptions(prod.pesticide_type)"
+                      :modelValue="prod.brand"
+                      @update:modelValue="updateProduct(sIdx, pIdx, 'brand', $event)"
+                      placeholder="เลือกแบรนด์"
+                      :error="fieldError(sIdx, pIdx, 'brand')"
+                    />
+                    <PolarisTextField
+                      v-if="prod.brand === 'other'"
+                      label="ระบุชื่อยา"
+                      :modelValue="prod.brand_other"
+                      @update:modelValue="updateProduct(sIdx, pIdx, 'brand_other', $event)"
+                      placeholder="พิมพ์ชื่อยา"
+                      :error="fieldError(sIdx, pIdx, 'brand_other')"
+                    />
+                  </template>
+                </div>
+
+                <div v-if="prod.pesticide_type && prod.pesticide_type !== 'hormone'" class="spray-panel__fields">
+                  <PolarisSelect
+                    label="E3.1 ศัตรูพืชเป้าหมาย (หลัก)"
+                    :options="getPestOptions(prod.pesticide_type)"
+                    :modelValue="prod.pest_primary"
+                    @update:modelValue="updateProduct(sIdx, pIdx, 'pest_primary', $event)"
+                    placeholder="เลือกศัตรูพืชหลัก"
+                  />
+                  <PolarisSelect
+                    label="E3.2 ศัตรูพืชเป้าหมาย (รอง)"
+                    :options="getPestOptions(prod.pesticide_type)"
+                    :modelValue="prod.pest_secondary"
+                    @update:modelValue="updateProduct(sIdx, pIdx, 'pest_secondary', $event)"
+                    placeholder="เลือกศัตรูพืชรอง (ถ้ามี)"
+                  />
+                </div>
+
+                <div class="spray-panel__fields">
                   <PolarisTextField
-                    label="E2. ชื่อผลิตภัณฑ์/ยี่ห้อ"
-                    :modelValue="prod.product"
-                    @update:modelValue="updateProduct(sIdx, pIdx, 'product', $event)"
-                    placeholder="ระบุชื่อยา"
-                    :error="fieldError(sIdx, pIdx, 'product')"
+                    label="E3.3 ขนาดบรรจุภัณฑ์ที่ซื้อ (กรัม/ซีซี)"
+                    :modelValue="prod.package_size"
+                    @update:modelValue="updateProduct(sIdx, pIdx, 'package_size', $event)"
+                    placeholder="เช่น 100 ซีซี"
                   />
                   <PolarisTextField
-                    label="E3. ศัตรูพืชเป้าหมาย"
-                    :modelValue="prod.pest_target"
-                    @update:modelValue="updateProduct(sIdx, pIdx, 'pest_target', $event)"
-                    placeholder="ระบุศัตรูพืช"
+                    label="E3.4 ซื้อยามาด้วยราคาเท่าไหร่ (บาท)"
+                    type="number"
+                    :min="0"
+                    suffix="บาท"
+                    :modelValue="prod.purchase_price"
+                    @update:modelValue="updateProduct(sIdx, pIdx, 'purchase_price', $event ? Number($event) : null)"
                   />
                   <PolarisTextField
                     label="E4. ปริมาณที่ใช้"
@@ -91,15 +139,18 @@
 <script>
 import {
   PolarisCard, PolarisCardHeader, PolarisCardSection,
-  PolarisTextField, PolarisBlockStack, PolarisText, PolarisButton,
+  PolarisTextField, PolarisSelect, PolarisBlockStack, PolarisText, PolarisButton,
 } from 'polaris-weweb-styles/components'
-import { createEmptyProduct } from '../constants.js'
+import {
+  createEmptyProduct, SPRAY_TYPE_OPTIONS,
+  BRAND_OPTIONS_MAP, PEST_TARGET_OPTIONS_MAP,
+} from '../constants.js'
 import RatingScale from './RatingScale.vue'
 
 export default {
   components: {
     PolarisCard, PolarisCardHeader, PolarisCardSection,
-    PolarisTextField, PolarisBlockStack, PolarisText, PolarisButton,
+    PolarisTextField, PolarisSelect, PolarisBlockStack, PolarisText, PolarisButton,
     RatingScale,
   },
   props: {
@@ -127,8 +178,17 @@ export default {
       }
       return result
     },
+    sprayTypeOptions() {
+      return SPRAY_TYPE_OPTIONS
+    },
   },
   methods: {
+    getBrandOptions(type) {
+      return BRAND_OPTIONS_MAP[type] || []
+    },
+    getPestOptions(type) {
+      return PEST_TARGET_OPTIONS_MAP[type] || []
+    },
     fieldError(sIdx, pIdx, field) {
       const key = `spray_${this.stageKey}_${sIdx}_${pIdx}_${field}`
       return this.errors[key] ? 'กรุณากรอกข้อมูลนี้' : undefined
@@ -147,6 +207,23 @@ export default {
         sessions.push(existing[i] || { products: [createEmptyProduct()] })
       }
       this.emitUpdate(sessions, clamped)
+    },
+    onTypeChange(sIdx, pIdx, newType) {
+      const sessions = this.sessions.map((s, si) => {
+        if (si !== sIdx) return { products: s.products.map(p => ({ ...p })) }
+        return {
+          products: s.products.map((p, pi) => {
+            if (pi !== pIdx) return { ...p }
+            return {
+              ...createEmptyProduct(),
+              pesticide_type: newType,
+              amount: p.amount,
+              satisfaction: p.satisfaction,
+            }
+          }),
+        }
+      })
+      this.emitUpdate(sessions)
     },
     updateProduct(sIdx, pIdx, field, value) {
       const sessions = this.sessions.map((s, si) => {
@@ -213,7 +290,7 @@ export default {
     gap: var(--p-space-300);
 
     @media (min-width: 768px) {
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     }
   }
 

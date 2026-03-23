@@ -147,6 +147,18 @@
               :error="signupErrors.area"
             />
 
+            <div class="rice-survey__image-section">
+              <PolarisText variant="bodyMd" fontWeight="semibold">รูปเกษตรกร</PolarisText>
+              <div class="rice-survey__image-preview" v-if="signupImagePreview">
+                <img :src="signupImagePreview" alt="รูปเกษตรกร" />
+                <PolarisButton variant="plain" tone="critical" size="slim" @click="removeSignupImage">ลบรูป</PolarisButton>
+              </div>
+              <div class="rice-survey__image-actions" v-else>
+                <input ref="signupFileInput" type="file" accept="image/*" capture="environment" style="display:none" @change="onSignupImageSelect" />
+                <PolarisButton size="slim" @click="$refs.signupFileInput?.click()">ถ่ายรูป / เลือกรูป</PolarisButton>
+              </div>
+            </div>
+
             <PolarisInline gap="200">
               <PolarisButton :disabled="isCreatingUser" @click="phase = 'tel_lookup'">ย้อนกลับ</PolarisButton>
               <PolarisButton variant="primary" :loading="isCreatingUser" @click="validateAndCreateUser">
@@ -238,6 +250,18 @@
               @update:modelValue="profileData.area = $event ? Number($event) : null"
               :error="profileErrors.area"
             />
+
+            <div class="rice-survey__image-section">
+              <PolarisText variant="bodyMd" fontWeight="semibold">รูปเกษตรกร</PolarisText>
+              <div class="rice-survey__image-preview" v-if="profileImagePreview">
+                <img :src="profileImagePreview" alt="รูปเกษตรกร" />
+                <PolarisButton variant="plain" tone="critical" size="slim" @click="removeProfileImage">ลบรูป</PolarisButton>
+              </div>
+              <div class="rice-survey__image-actions" v-else>
+                <input ref="profileFileInput" type="file" accept="image/*" capture="environment" style="display:none" @change="onProfileImageSelect" />
+                <PolarisButton size="slim" @click="$refs.profileFileInput?.click()">ถ่ายรูป / เลือกรูป</PolarisButton>
+              </div>
+            </div>
 
             <PolarisInline gap="200">
               <PolarisButton @click="phase = 'tel_lookup'">ย้อนกลับ</PolarisButton>
@@ -735,6 +759,53 @@ export default {
     const showNotFoundBanner = ref(false)
     const isNewUser = ref(false)
 
+    // ─── Image capture state ───
+    const signupImageFile = ref(null)
+    const signupImagePreview = ref(null)
+    const profileImageFile = ref(null)
+    const profileImagePreview = ref(null)
+    const isUploadingImage = ref(false)
+
+    function onSignupImageSelect(event) {
+      const file = event.target?.files?.[0]
+      if (!file) return
+      signupImageFile.value = file
+      signupImagePreview.value = URL.createObjectURL(file)
+    }
+
+    function onProfileImageSelect(event) {
+      const file = event.target?.files?.[0]
+      if (!file) return
+      profileImageFile.value = file
+      profileImagePreview.value = URL.createObjectURL(file)
+    }
+
+    function removeSignupImage() {
+      signupImageFile.value = null
+      signupImagePreview.value = null
+    }
+
+    function removeProfileImage() {
+      profileImageFile.value = null
+      profileImagePreview.value = null
+    }
+
+    async function uploadUserImage(userId, file) {
+      const client = supabase.value
+      if (!client || !file) return null
+      const ext = file.name?.split('.').pop() || 'jpg'
+      const path = `user-photos/${MERCHANT_ID}/${userId}.${ext}`
+      const { error } = await client.storage
+        .from('images')
+        .upload(path, file, { upsert: true, contentType: file.type })
+      if (error) {
+        debugLog(`Image upload error: ${error.message}`)
+        return null
+      }
+      const { data: urlData } = client.storage.from('images').getPublicUrl(path)
+      return urlData?.publicUrl || null
+    }
+
     // ─── Signup state ───
     const signupData = reactive({
       firstname: '',
@@ -1097,12 +1168,20 @@ export default {
         farmerUser.value = { ...farmerUser.value, firstname: profileData.firstname, lastname: profileData.lastname }
         setFarmerNameVar(`${profileData.firstname} ${profileData.lastname}`)
 
+        if (profileImageFile.value) {
+          const imageUrl = await uploadUserImage(farmerId, profileImageFile.value)
+          if (imageUrl) {
+            await client.from('user_accounts').update({ image: imageUrl }).eq('id', farmerId)
+            debugLog(`Profile image updated: ${imageUrl}`)
+          }
+        }
+
         debugLog('Profile updated successfully')
         showNotification('success', 'อัปเดตข้อมูลเรียบร้อย')
 
         emit('trigger-event', {
           name: 'profile-updated',
-          event: { farmerId, updatedFields: ['name', 'address', 'crop', 'area'] },
+          event: { farmerId, updatedFields: ['name', 'address', 'crop', 'area', 'image'] },
         })
 
         startSurvey()
@@ -1225,7 +1304,7 @@ export default {
 
         const { data, error } = await client
           .from('user_accounts')
-          .select('id, firstname, lastname, tel, merchant_id')
+          .select('id, firstname, lastname, tel, merchant_id, image')
           .eq('merchant_id', MERCHANT_ID)
           .eq('tel', normalized)
           .maybeSingle()
@@ -1269,6 +1348,8 @@ export default {
       profileSubmissionId.value = null
       profileDistricts.value = []
       profileSubdistricts.value = []
+      profileImageFile.value = null
+      profileImagePreview.value = farmerUser.value?.image || null
       Object.keys(profileErrors).forEach(k => delete profileErrors[k])
 
       phase.value = 'profile_review'
@@ -1374,6 +1455,14 @@ export default {
           ])
         }
 
+        if (signupImageFile.value) {
+          const imageUrl = await uploadUserImage(farmerId, signupImageFile.value)
+          if (imageUrl) {
+            await client.from('user_accounts').update({ image: imageUrl }).eq('id', farmerId)
+            debugLog(`Image saved: ${imageUrl}`)
+          }
+        }
+
         debugLog('Signup data saved')
         showNotification('success', 'สร้างบัญชีเกษตรกรเรียบร้อย')
 
@@ -1465,8 +1554,14 @@ export default {
           for (let s = 0; s < count; s++) {
             const products = sessions[s]?.products || []
             products.forEach((prod, p) => {
-              if (!prod.product?.trim())
-                errs[`spray_${stageKey}_${s}_${p}_product`] = 'true'
+              if (!prod.pesticide_type)
+                errs[`spray_${stageKey}_${s}_${p}_pesticide_type`] = 'true'
+              if (prod.pesticide_type && prod.pesticide_type !== 'hormone') {
+                if (!prod.brand)
+                  errs[`spray_${stageKey}_${s}_${p}_brand`] = 'true'
+                if (prod.brand === 'other' && !prod.brand_other?.trim())
+                  errs[`spray_${stageKey}_${s}_${p}_brand_other`] = 'true'
+              }
               if (prod.amount == null || prod.amount === '')
                 errs[`spray_${stageKey}_${s}_${p}_amount`] = 'true'
             })
@@ -1474,7 +1569,7 @@ export default {
         })
         const sprayErrors = Object.keys(errs).filter(k => k.startsWith('spray_'))
         if (sprayErrors.length) {
-          errs._spray = 'กรุณากรอกชื่อยาและปริมาณให้ครบทุกรายการ'
+          errs._spray = 'กรุณากรอกข้อมูลยาให้ครบทุกรายการ'
         }
       }
 
@@ -1720,6 +1815,10 @@ export default {
 
       Object.keys(signupErrors).forEach(k => delete signupErrors[k])
       Object.keys(stepErrors).forEach(k => delete stepErrors[k])
+      signupImageFile.value = null
+      signupImagePreview.value = null
+      profileImageFile.value = null
+      profileImagePreview.value = null
       notifications.value = []
       debugMessages.value = []
       showCancelConfirm.value = false
@@ -1774,6 +1873,9 @@ export default {
       onProfileProvinceChange, onProfileDistrictChange, onProfileSubdistrictChange,
       toggleProfileCrop, validateAndUpdateProfile,
       toggleCrop,
+      signupImagePreview, profileImagePreview,
+      onSignupImageSelect, onProfileImageSelect,
+      removeSignupImage, removeProfileImage,
       nextStep, prevStep, validateAllSteps, updateSprayStage,
       monthLabel, investmentLabel, cropLabel, foundCount,
       handleSubmit, dismissNotification, reset, cancelSurvey, confirmCancel,
@@ -1846,6 +1948,31 @@ export default {
     display: flex;
     flex-wrap: wrap;
     gap: var(--p-space-200) var(--p-space-400);
+  }
+
+  &__image-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--p-space-200);
+  }
+
+  &__image-preview {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--p-space-300);
+
+    img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: var(--p-border-radius-200);
+      border: var(--p-border-width-025) solid var(--p-color-border);
+    }
+  }
+
+  &__image-actions {
+    display: flex;
+    gap: var(--p-space-200);
   }
 
   &__progress {

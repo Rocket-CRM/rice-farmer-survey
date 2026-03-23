@@ -138,13 +138,112 @@ export const RICE_VARIETY_OPTIONS = [
 export const SPRAY_TYPE_OPTIONS = [
   { value: 'herbicide', label: 'ยาหญ้า' },
   { value: 'insecticide', label: 'ยาแมลง' },
-  { value: 'fungicide', label: 'ยาโรค' },
+  { value: 'fungicide', label: 'ยาเชื้อรา' },
   { value: 'hormone', label: 'ฮอร์โมนส์' },
-  { value: 'other', label: 'อื่นๆ' },
 ]
 
+export const HERBICIDE_BRAND_OPTIONS = [
+  { value: 'โซฟิต', label: 'โซฟิต' },
+  { value: 'นาการ์ด', label: 'นาการ์ด' },
+  { value: 'เอคโค่', label: 'เอคโค่' },
+  { value: 'พอราโด้', label: 'พอราโด้' },
+  { value: 'โซลิโต้', label: 'โซลิโต้' },
+  { value: 'อัลมิกซ์', label: 'อัลมิกซ์' },
+  { value: 'ไพแองเคอร์', label: 'ไพแองเคอร์' },
+  { value: 'เตตริส', label: 'เตตริส' },
+  { value: 'นอร์มินี', label: 'นอร์มินี' },
+  { value: 'แกมิต', label: 'แกมิต' },
+  { value: 'ดาราเอมีน', label: 'ดาราเอมีน' },
+  { value: 'ไรเซอร์', label: 'ไรเซอร์' },
+  { value: 'ไพซีโร่', label: 'ไพซีโร่' },
+  { value: 'บิวทาคลอร์ (generics)', label: 'บิวทาคลอร์ (generics)' },
+  { value: 'เพรทิลาคลอร์ (generics)', label: 'เพรทิลาคลอร์ (generics)' },
+  { value: 'ไพริเบนซอกซิม (generics)', label: 'ไพริเบนซอกซิม (generics)' },
+  { value: 'บิสไพริแบค-โซเดียม (generics)', label: 'บิสไพริแบค-โซเดียม (generics)' },
+  { value: 'โพรฟอกซิดิม (generics)', label: 'โพรฟอกซิดิม (generics)' },
+  { value: 'โคลมาโซน + โพรพานิล (generics)', label: 'โคลมาโซน + โพรพานิล (generics)' },
+  { value: 'บิวทาคลอร์ + โพรพานิล (generics)', label: 'บิวทาคลอร์ + โพรพานิล (generics)' },
+  { value: 'ทูโฟดี (generics)', label: 'ทูโฟดี (generics)' },
+  { value: 'ไซฮาโลฟอป-บิวทิล (generics)', label: 'ไซฮาโลฟอป-บิวทิล (generics)' },
+  { value: 'other', label: 'อื่นๆ ระบุ' },
+]
+
+export const INSECTICIDE_BRAND_OPTIONS = [
+  { value: 'แอคทารา', label: 'แอคทารา' },
+  { value: 'แอมเมท', label: 'แอมเมท' },
+  { value: 'แอสเซนต์', label: 'แอสเซนต์' },
+  { value: 'เบลท์ เอ็กซ์เพิร์ท', label: 'เบลท์ เอ็กซ์เพิร์ท' },
+  { value: 'พรีวาธอน', label: 'พรีวาธอน' },
+  { value: 'โปรวาโด', label: 'โปรวาโด' },
+  { value: 'ริดดิด', label: 'ริดดิด' },
+  { value: 'เวอตาโก', label: 'เวอตาโก' },
+  { value: 'เพลนั่ม', label: 'เพลนั่ม' },
+  { value: 'เคอร์บิกซ์', label: 'เคอร์บิกซ์' },
+  { value: 'สตาร์เกิล', label: 'สตาร์เกิล' },
+  { value: 'วาเยโก', label: 'วาเยโก' },
+  { value: 'อะบาเมคติน (generics)', label: 'อะบาเมคติน (generics)' },
+  { value: 'คาร์โบซัลแฟน (generics)', label: 'คาร์โบซัลแฟน (generics)' },
+  { value: 'คาร์แทปไฮโดรคลอไรด์ (generics)', label: 'คาร์แทปไฮโดรคลอไรด์ (generics)' },
+  { value: 'ไซเพอร์เมทริน (generics)', label: 'ไซเพอร์เมทริน (generics)' },
+  { value: 'อีมาเมกตินเบนโซเอต (generics)', label: 'อีมาเมกตินเบนโซเอต (generics)' },
+  { value: 'ฟิโพรนิล (generics)', label: 'ฟิโพรนิล (generics)' },
+  { value: 'ลูเฟนนูรอน (generics)', label: 'ลูเฟนนูรอน (generics)' },
+  { value: 'ไบเฟนทริน (generics)', label: 'ไบเฟนทริน (generics)' },
+  { value: 'ไตรอะโซฟอส (generics)', label: 'ไตรอะโซฟอส (generics)' },
+  { value: 'ไพมีโทรซีน (generics)', label: 'ไพมีโทรซีน (generics)' },
+  { value: 'other', label: 'อื่นๆ ระบุ' },
+]
+
+export const FUNGICIDE_BRAND_OPTIONS = [
+  { value: 'อามูเร่', label: 'อามูเร่' },
+  { value: 'เซลติมา', label: 'เซลติมา' },
+  { value: 'นาติโว', label: 'นาติโว' },
+  { value: 'ออติวา', label: 'ออติวา' },
+  { value: 'เอเทียจ', label: 'เอเทียจ' },
+  { value: 'รีเฟลกซ์ อีโว่', label: 'รีเฟลกซ์ อีโว่' },
+  { value: 'อาคาเพลลา ซิสเท็ม', label: 'อาคาเพลลา ซิสเท็ม' },
+  { value: 'แอนทราโคล', label: 'แอนทราโคล' },
+  { value: 'แอนวิล', label: 'แอนวิล' },
+  { value: 'บีม', label: 'บีม' },
+  { value: 'คัสโตเดีย', label: 'คัสโตเดีย' },
+  { value: 'ฟูจิวัน', label: 'ฟูจิวัน' },
+  { value: 'คาซู', label: 'คาซู' },
+  { value: 'ลูน่าเอกซ์พีเรียน', label: 'ลูน่าเอกซ์พีเรียน' },
+  { value: 'ไทแบค', label: 'ไทแบค' },
+  { value: 'ไดฟีโนโคนาโซล + โพรพิโคนาโซล (generics)', label: 'ไดฟีโนโคนาโซล + โพรพิโคนาโซล (generics)' },
+  { value: 'อะซ็อกซีสโตรบิน + ไดฟีโนโคนาโซล (generics)', label: 'อะซ็อกซีสโตรบิน + ไดฟีโนโคนาโซล (generics)' },
+  { value: 'คาเบนดาซิม (generics)', label: 'คาเบนดาซิม (generics)' },
+  { value: 'แมนโคเซบ (generics)', label: 'แมนโคเซบ (generics)' },
+  { value: 'โพรพิเนบ (generics)', label: 'โพรพิเนบ (generics)' },
+  { value: 'วาลิดามัยซิน (generics)', label: 'วาลิดามัยซิน (generics)' },
+  { value: 'เฮกซะโคนาโซล (generics)', label: 'เฮกซะโคนาโซล (generics)' },
+  { value: 'other', label: 'อื่นๆ ระบุ' },
+]
+
+export const BRAND_OPTIONS_MAP = {
+  herbicide: HERBICIDE_BRAND_OPTIONS,
+  insecticide: INSECTICIDE_BRAND_OPTIONS,
+  fungicide: FUNGICIDE_BRAND_OPTIONS,
+}
+
+export const PEST_TARGET_OPTIONS_MAP = {
+  herbicide: WEED_OPTIONS.map(w => ({ value: w.code, label: w.label })),
+  insecticide: INSECT_OPTIONS.map(i => ({ value: i.code, label: i.label })),
+  fungicide: DISEASE_OPTIONS.map(d => ({ value: d.code, label: d.label })),
+}
+
 export function createEmptyProduct() {
-  return { product: '', amount: null, pest_target: '', satisfaction: null }
+  return {
+    pesticide_type: null,
+    brand: null,
+    brand_other: '',
+    pest_primary: null,
+    pest_secondary: null,
+    package_size: '',
+    purchase_price: null,
+    amount: null,
+    satisfaction: null,
+  }
 }
 
 export const SURVEY_STEPS = [
