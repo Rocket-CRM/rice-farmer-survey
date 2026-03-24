@@ -48,7 +48,7 @@
                     :error="fieldError(sIdx, pIdx, 'pesticide_type')"
                   />
 
-                  <template v-if="prod.pesticide_type && prod.pesticide_type !== 'hormone'">
+                  <template v-if="prod.pesticide_type">
                     <PolarisSelect
                       label="E2.1 แบรนด์ของยา"
                       :options="getBrandOptions(prod.pesticide_type)"
@@ -66,6 +66,25 @@
                       :error="fieldError(sIdx, pIdx, 'brand_other')"
                     />
                   </template>
+                </div>
+
+                <div v-if="prod.pesticide_type === 'hormone'" class="spray-panel__fields spray-panel__fields--full">
+                  <PolarisSelect
+                    label="วัตถุประสงค์ในการใส่"
+                    :options="hormonePurposeOptions"
+                    :modelValue="prod.hormone_purpose"
+                    @update:modelValue="updateProduct(sIdx, pIdx, 'hormone_purpose', $event)"
+                    placeholder="เลือกวัตถุประสงค์"
+                    :error="fieldError(sIdx, pIdx, 'hormone_purpose')"
+                  />
+                  <PolarisTextField
+                    v-if="prod.hormone_purpose === 'other'"
+                    label="ระบุวัตถุประสงค์"
+                    :modelValue="prod.hormone_purpose_other"
+                    @update:modelValue="updateProduct(sIdx, pIdx, 'hormone_purpose_other', $event)"
+                    placeholder="พิมพ์รายละเอียด"
+                    :error="fieldError(sIdx, pIdx, 'hormone_purpose_other')"
+                  />
                 </div>
 
                 <div v-if="prod.pesticide_type && prod.pesticide_type !== 'hormone'" class="spray-panel__fields">
@@ -94,19 +113,16 @@
                   />
                   <PolarisTextField
                     label="E3.4 ซื้อยามาด้วยราคาเท่าไหร่ (บาท)"
-                    type="number"
-                    :min="0"
-                    suffix="บาท"
                     :modelValue="prod.purchase_price"
-                    @update:modelValue="updateProduct(sIdx, pIdx, 'purchase_price', $event ? Number($event) : null)"
+                    @update:modelValue="updateProduct(sIdx, pIdx, 'purchase_price', $event)"
+                    placeholder="ระบุราคา"
+                    :error="fieldError(sIdx, pIdx, 'purchase_price')"
                   />
                   <PolarisTextField
-                    label="E4. ปริมาณที่ใช้"
-                    type="number"
-                    :min="0"
-                    suffix="มล./ไร่"
+                    label="E4. ปริมาณที่ใช้ (กรัม/ซีซี ต่อไร่)"
                     :modelValue="prod.amount"
-                    @update:modelValue="updateProduct(sIdx, pIdx, 'amount', $event ? Number($event) : null)"
+                    @update:modelValue="updateProduct(sIdx, pIdx, 'amount', $event)"
+                    placeholder="ระบุปริมาณ"
                     :error="fieldError(sIdx, pIdx, 'amount')"
                   />
                 </div>
@@ -143,7 +159,7 @@ import {
 } from 'polaris-weweb-styles/components'
 import {
   createEmptyProduct, SPRAY_TYPE_OPTIONS,
-  BRAND_OPTIONS_MAP, PEST_TARGET_OPTIONS_MAP,
+  BRAND_OPTIONS_MAP, PEST_TARGET_OPTIONS_MAP, HORMONE_PURPOSE_OPTIONS,
 } from '../constants.js'
 import RatingScale from './RatingScale.vue'
 
@@ -180,6 +196,9 @@ export default {
     },
     sprayTypeOptions() {
       return SPRAY_TYPE_OPTIONS
+    },
+    hormonePurposeOptions() {
+      return HORMONE_PURPOSE_OPTIONS
     },
   },
   methods: {
@@ -291,6 +310,12 @@ export default {
 
     @media (min-width: 768px) {
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+  }
+
+  &__fields--full {
+    @media (min-width: 768px) {
+      grid-template-columns: 1fr;
     }
   }
 

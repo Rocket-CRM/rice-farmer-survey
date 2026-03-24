@@ -220,10 +220,42 @@ export const FUNGICIDE_BRAND_OPTIONS = [
   { value: 'other', label: 'อื่นๆ ระบุ' },
 ]
 
+export const HORMONE_BRAND_OPTIONS = [
+  { value: 'อีสไบออน', label: 'อีสไบออน' },
+  { value: 'เบรซิล มัลติ', label: 'เบรซิล มัลติ' },
+  { value: 'เบรซิล แคลโบ', label: 'เบรซิล แคลโบ' },
+  { value: 'แอมบิชั่น', label: 'แอมบิชั่น' },
+  { value: 'เทกิโม', label: 'เทกิโม' },
+  { value: 'ซิลิเบอร์', label: 'ซิลิเบอร์' },
+  { value: 'โฟร์ทรี (4Tree)', label: 'โฟร์ทรี (4Tree)' },
+  { value: 'ฟาสโกลด์', label: 'ฟาสโกลด์' },
+  { value: 'ไร่เทพ', label: 'ไร่เทพ' },
+  { value: 'บีพลัส', label: 'บีพลัส' },
+  { value: 'โมซ่าส์', label: 'โมซ่าส์' },
+  { value: 'อะมิโนแอซิด (ไม่ระบุยี่ห้อ)', label: 'อะมิโนแอซิด (ไม่ระบุยี่ห้อ)' },
+  { value: 'สาหร่ายสกัด (ไม่ระบุยี่ห้อ)', label: 'สาหร่ายสกัด (ไม่ระบุยี่ห้อ)' },
+  { value: 'other', label: 'อื่นๆ ระบุ' },
+]
+
+export const HORMONE_PURPOSE_OPTIONS = [
+  { value: 'เร่งราก', label: 'เร่งราก' },
+  { value: 'แตกกอดี', label: 'แตกกอดี' },
+  { value: 'ใบเขียว', label: 'ใบเขียว' },
+  { value: 'เร่งท้องโผล่', label: 'เร่งท้องโผล่' },
+  { value: 'ข้าวออกรวงพร้อมกัน', label: 'ข้าวออกรวงพร้อมกัน' },
+  { value: 'รวงยาว', label: 'รวงยาว' },
+  { value: 'รวงใหญ่', label: 'รวงใหญ่' },
+  { value: 'เมล็ดเต็ม', label: 'เมล็ดเต็ม' },
+  { value: 'เพิ่มน้ำหนักเมล็ด', label: 'เพิ่มน้ำหนักเมล็ด' },
+  { value: 'เมล็ดไม่ลีบ', label: 'เมล็ดไม่ลีบ' },
+  { value: 'other', label: 'อื่นๆ ระบุ' },
+]
+
 export const BRAND_OPTIONS_MAP = {
   herbicide: HERBICIDE_BRAND_OPTIONS,
   insecticide: INSECTICIDE_BRAND_OPTIONS,
   fungicide: FUNGICIDE_BRAND_OPTIONS,
+  hormone: HORMONE_BRAND_OPTIONS,
 }
 
 export const PEST_TARGET_OPTIONS_MAP = {
@@ -239,9 +271,11 @@ export function createEmptyProduct() {
     brand_other: '',
     pest_primary: null,
     pest_secondary: null,
+    hormone_purpose: null,
+    hormone_purpose_other: '',
     package_size: '',
-    purchase_price: null,
-    amount: null,
+    purchase_price: '',
+    amount: '',
     satisfaction: null,
   }
 }

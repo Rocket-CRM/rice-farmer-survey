@@ -44,6 +44,21 @@ No database changes needed (column + bucket + RLS already exist).
 
 ---
 
+## V3.1 Section E — Hormone brands, purpose, free-text E3.4/E4
+
+| # | Change | Detail |
+|---|--------|--------|
+| 1 | **E3.4 / E4** | Both are **free text** (not `type="number"`). Stored as strings; validation requires non-empty after trim. |
+| 2 | **E2.1 for ฮอร์โมนส์** | `HORMONE_BRAND_OPTIONS` (14 brands + อื่นๆ); E2.1 now shows for **all** types including hormone. |
+| 3 | **ฮอร์โมนส์ only** | Replaces E3.1/E3.2 with dropdown **วัตถุประสงค์ในการใส่** (`HORMONE_PURPOSE_OPTIONS`: เร่งราก, แตกกอดี, … + อื่นๆ) + optional text when "อื่นๆ". |
+| 4 | **Validation** | Brand required for all types; hormone adds `hormone_purpose` (+ `hormone_purpose_other` if other); `purchase_price` and `amount` both required. |
+
+Product model adds: `hormone_purpose`, `hormone_purpose_other`; `purchase_price` / `amount` default to `''`.
+
+Files: `constants.js`, `SprayStagePanel.vue`, `wwElement.vue`.
+
+---
+
 ## V2 Feedback Round 2 (Completed)
 
 | # | Item | Change | Files |

@@ -1556,14 +1556,24 @@ export default {
             products.forEach((prod, p) => {
               if (!prod.pesticide_type)
                 errs[`spray_${stageKey}_${s}_${p}_pesticide_type`] = 'true'
-              if (prod.pesticide_type && prod.pesticide_type !== 'hormone') {
+              if (prod.pesticide_type) {
                 if (!prod.brand)
                   errs[`spray_${stageKey}_${s}_${p}_brand`] = 'true'
                 if (prod.brand === 'other' && !prod.brand_other?.trim())
                   errs[`spray_${stageKey}_${s}_${p}_brand_other`] = 'true'
               }
-              if (prod.amount == null || prod.amount === '')
+              if (prod.pesticide_type === 'hormone') {
+                if (!prod.hormone_purpose)
+                  errs[`spray_${stageKey}_${s}_${p}_hormone_purpose`] = 'true'
+                if (prod.hormone_purpose === 'other' && !prod.hormone_purpose_other?.trim())
+                  errs[`spray_${stageKey}_${s}_${p}_hormone_purpose_other`] = 'true'
+              }
+              const amtStr = String(prod.amount ?? '').trim()
+              if (!amtStr)
                 errs[`spray_${stageKey}_${s}_${p}_amount`] = 'true'
+              const priceStr = String(prod.purchase_price ?? '').trim()
+              if (!priceStr)
+                errs[`spray_${stageKey}_${s}_${p}_purchase_price`] = 'true'
             })
           }
         })
