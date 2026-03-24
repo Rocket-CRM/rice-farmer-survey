@@ -680,6 +680,8 @@ import {
   MONTH_OPTIONS, WEED_OPTIONS, INSECT_OPTIONS, DISEASE_OPTIONS,
   GROWTH_STAGES, INVESTMENT_OPTIONS, CROP_OPTIONS, RICE_VARIETY_OPTIONS,
   SURVEY_STEPS, normalizeTel, normalizeSprayProduct,
+  isPestTargetOtherSlot1, isPestTargetOtherSlot2,
+  pestSecondaryHasOtherSlot1, pestSecondaryHasOtherSlot2,
   initWeedAssessment, initInsectAssessment, initDiseaseAssessment, initSprayApplications,
 } from './constants.js'
 import AssessmentMatrix from './components/AssessmentMatrix.vue'
@@ -1568,6 +1570,16 @@ export default {
                   errs[`spray_${stageKey}_${s}_${p}_hormone_purpose`] = 'true'
                 if (prodN.hormone_purpose.includes('other') && !prodN.hormone_purpose_other?.trim())
                   errs[`spray_${stageKey}_${s}_${p}_hormone_purpose_other`] = 'true'
+              }
+              if (prodN.pesticide_type && prodN.pesticide_type !== 'hormone') {
+                if (isPestTargetOtherSlot1(prodN.pest_primary) && !String(prodN.pest_primary_other_1 ?? '').trim())
+                  errs[`spray_${stageKey}_${s}_${p}_pest_primary_other_1`] = 'true'
+                if (isPestTargetOtherSlot2(prodN.pest_primary) && !String(prodN.pest_primary_other_2 ?? '').trim())
+                  errs[`spray_${stageKey}_${s}_${p}_pest_primary_other_2`] = 'true'
+                if (pestSecondaryHasOtherSlot1(prodN.pest_secondary) && !String(prodN.pest_secondary_other_1 ?? '').trim())
+                  errs[`spray_${stageKey}_${s}_${p}_pest_secondary_other_1`] = 'true'
+                if (pestSecondaryHasOtherSlot2(prodN.pest_secondary) && !String(prodN.pest_secondary_other_2 ?? '').trim())
+                  errs[`spray_${stageKey}_${s}_${p}_pest_secondary_other_2`] = 'true'
               }
               const amtStr = String(prodN.amount ?? '').trim()
               if (!amtStr)

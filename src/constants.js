@@ -264,13 +264,35 @@ export const PEST_TARGET_OPTIONS_MAP = {
   fungicide: DISEASE_OPTIONS.map(d => ({ value: d.code, label: d.label })),
 }
 
+/** E3.1 / E3.2 "อื่นๆ (ระบุ) 1" — same slot across weed/insect/disease lists */
+export const PEST_TARGET_OTHER_1_CODES = ['weed_other_1', 'pest_other_1', 'disease_other_1']
+/** E3.1 / E3.2 "อื่นๆ (ระบุ) 2" */
+export const PEST_TARGET_OTHER_2_CODES = ['weed_other_2', 'pest_other_2', 'disease_other_2']
+
+export function isPestTargetOtherSlot1(code) {
+  return code != null && PEST_TARGET_OTHER_1_CODES.includes(String(code))
+}
+export function isPestTargetOtherSlot2(code) {
+  return code != null && PEST_TARGET_OTHER_2_CODES.includes(String(code))
+}
+export function pestSecondaryHasOtherSlot1(arr) {
+  return Array.isArray(arr) && arr.some((x) => isPestTargetOtherSlot1(x))
+}
+export function pestSecondaryHasOtherSlot2(arr) {
+  return Array.isArray(arr) && arr.some((x) => isPestTargetOtherSlot2(x))
+}
+
 export function createEmptyProduct() {
   return {
     pesticide_type: null,
     brand: null,
     brand_other: '',
     pest_primary: null,
+    pest_primary_other_1: '',
+    pest_primary_other_2: '',
     pest_secondary: [],
+    pest_secondary_other_1: '',
+    pest_secondary_other_2: '',
     hormone_purpose: [],
     hormone_purpose_other: '',
     package_size: '',
@@ -292,7 +314,15 @@ export function normalizeSprayProduct(p) {
   if (Array.isArray(hp)) hormone_purpose = [...hp]
   else if (hp != null && hp !== '') hormone_purpose = [String(hp)]
 
-  return { ...p, pest_secondary, hormone_purpose }
+  return {
+    ...p,
+    pest_secondary,
+    hormone_purpose,
+    pest_primary_other_1: p.pest_primary_other_1 ?? '',
+    pest_primary_other_2: p.pest_primary_other_2 ?? '',
+    pest_secondary_other_1: p.pest_secondary_other_1 ?? '',
+    pest_secondary_other_2: p.pest_secondary_other_2 ?? '',
+  }
 }
 
 export const SURVEY_STEPS = [

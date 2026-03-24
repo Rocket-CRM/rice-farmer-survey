@@ -94,8 +94,26 @@
                       label="E3.1 ศัตรูพืชเป้าหมาย (หลัก)"
                       :options="getPestOptions(prod.pesticide_type)"
                       :modelValue="prod.pest_primary"
-                      @update:modelValue="updateProduct(sIdx, pIdx, 'pest_primary', $event)"
+                      @update:modelValue="onPestPrimaryChange(sIdx, pIdx, $event)"
                       placeholder="เลือกศัตรูพืชหลัก"
+                    />
+                    <PolarisTextField
+                      v-if="isPestPrimaryOther1(prod)"
+                      class="spray-panel__field-span"
+                      label="ระบุศัตรูพืช (หลัก) — อื่นๆ 1"
+                      :modelValue="prod.pest_primary_other_1"
+                      @update:modelValue="updateProduct(sIdx, pIdx, 'pest_primary_other_1', $event)"
+                      placeholder="พิมพ์รายละเอียด"
+                      :error="fieldError(sIdx, pIdx, 'pest_primary_other_1')"
+                    />
+                    <PolarisTextField
+                      v-if="isPestPrimaryOther2(prod)"
+                      class="spray-panel__field-span"
+                      label="ระบุศัตรูพืช (หลัก) — อื่นๆ 2"
+                      :modelValue="prod.pest_primary_other_2"
+                      @update:modelValue="updateProduct(sIdx, pIdx, 'pest_primary_other_2', $event)"
+                      placeholder="พิมพ์รายละเอียด"
+                      :error="fieldError(sIdx, pIdx, 'pest_primary_other_2')"
                     />
                   </div>
                   <div class="spray-panel__multi">
@@ -105,7 +123,23 @@
                       placeholder="เลือกศัตรูพืชรอง..."
                       :options="getPestOptions(prod.pesticide_type)"
                       :model-value="prod.pest_secondary || []"
-                      @update:modelValue="updateProduct(sIdx, pIdx, 'pest_secondary', $event)"
+                      @update:modelValue="setPestSecondary(sIdx, pIdx, $event)"
+                    />
+                    <PolarisTextField
+                      v-if="isPestSecondaryOther1(prod)"
+                      label="ระบุศัตรูพืช (รอง) — อื่นๆ 1"
+                      :modelValue="prod.pest_secondary_other_1"
+                      @update:modelValue="updateProduct(sIdx, pIdx, 'pest_secondary_other_1', $event)"
+                      placeholder="พิมพ์รายละเอียด"
+                      :error="fieldError(sIdx, pIdx, 'pest_secondary_other_1')"
+                    />
+                    <PolarisTextField
+                      v-if="isPestSecondaryOther2(prod)"
+                      label="ระบุศัตรูพืช (รอง) — อื่นๆ 2"
+                      :modelValue="prod.pest_secondary_other_2"
+                      @update:modelValue="updateProduct(sIdx, pIdx, 'pest_secondary_other_2', $event)"
+                      placeholder="พิมพ์รายละเอียด"
+                      :error="fieldError(sIdx, pIdx, 'pest_secondary_other_2')"
                     />
                   </div>
                 </div>
@@ -166,6 +200,8 @@ import {
 import {
   createEmptyProduct, normalizeSprayProduct, SPRAY_TYPE_OPTIONS,
   BRAND_OPTIONS_MAP, PEST_TARGET_OPTIONS_MAP, HORMONE_PURPOSE_OPTIONS,
+  isPestTargetOtherSlot1, isPestTargetOtherSlot2,
+  pestSecondaryHasOtherSlot1, pestSecondaryHasOtherSlot2,
 } from '../constants.js'
 import RatingScale from './RatingScale.vue'
 import MultiSelectDropdown from './MultiSelectDropdown.vue'
@@ -259,6 +295,51 @@ export default {
       })
       this.emitUpdate(sessions)
     },
+    isPestPrimaryOther1(prod) {
+      return isPestTargetOtherSlot1(prod.pest_primary)
+    },
+    isPestPrimaryOther2(prod) {
+      return isPestTargetOtherSlot2(prod.pest_primary)
+    },
+    isPestSecondaryOther1(prod) {
+      return pestSecondaryHasOtherSlot1(prod.pest_secondary)
+    },
+    isPestSecondaryOther2(prod) {
+      return pestSecondaryHasOtherSlot2(prod.pest_secondary)
+    },
+    onPestPrimaryChange(sIdx, pIdx, value) {
+      const sessions = this.sessions.map((s, si) => {
+        if (si !== sIdx) return { products: s.products.map((p) => ({ ...p })) }
+        return {
+          products: s.products.map((p, pi) => {
+            if (pi !== pIdx) return { ...p }
+            let o1 = p.pest_primary_other_1
+            let o2 = p.pest_primary_other_2
+            if (!isPestTargetOtherSlot1(value)) o1 = ''
+            if (!isPestTargetOtherSlot2(value)) o2 = ''
+            return { ...p, pest_primary: value, pest_primary_other_1: o1, pest_primary_other_2: o2 }
+          }),
+        }
+      })
+      this.emitUpdate(sessions)
+    },
+    setPestSecondary(sIdx, pIdx, arr) {
+      const next = Array.isArray(arr) ? arr : []
+      const sessions = this.sessions.map((s, si) => {
+        if (si !== sIdx) return { products: s.products.map((p) => ({ ...p })) }
+        return {
+          products: s.products.map((p, pi) => {
+            if (pi !== pIdx) return { ...p }
+            let o1 = p.pest_secondary_other_1
+            let o2 = p.pest_secondary_other_2
+            if (!pestSecondaryHasOtherSlot1(next)) o1 = ''
+            if (!pestSecondaryHasOtherSlot2(next)) o2 = ''
+            return { ...p, pest_secondary: next, pest_secondary_other_1: o1, pest_secondary_other_2: o2 }
+          }),
+        }
+      })
+      this.emitUpdate(sessions)
+    },
     setHormonePurposes(sIdx, pIdx, arr) {
       const next = Array.isArray(arr) ? arr : []
       const sessions = this.sessions.map((s, si) => {
@@ -347,6 +428,10 @@ export default {
     @media (min-width: 768px) {
       grid-template-columns: 1fr;
     }
+  }
+
+  &__field-span {
+    grid-column: 1 / -1;
   }
 
   &__pest-block {
