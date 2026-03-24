@@ -4,7 +4,7 @@ Single reference for what changed (read this .md instead of re-explaining in pro
 
 ## Current State
 - **Branch**: `main`
-- **Latest commit**: (see latest section below)
+- **Latest commit**: `d3c04c5` — V3.2 multi-select E3.2 + hormone purposes
 - **Supabase project**: `wkevmsedchftztoolkmi` (CRM)
 - **Merchant ID**: `8f67aa08-dfce-454d-bfb1-effc4ee45f1f`
 
@@ -59,16 +59,36 @@ Files: `constants.js`, `SprayStagePanel.vue`, `wwElement.vue`.
 
 ---
 
-## V3.2 Section E — Multi-select E3.2 + hormone purposes
+## V3.2 Section E — Multi-select E3.2 + hormone purposes (`d3c04c5`)
+
+### Summary (what changed)
+
+| Area | Before | After |
+|------|--------|--------|
+| **E3.2** (non-hormone only) | One `PolarisSelect` — ศัตรูรอง **หนึ่งรายการ** | **หลายรายการ**: `PolarisCheckbox` ต่อตัวเลือก; เก็บเป็น `pest_secondary: string[]` (codes เหมือนเดิม) |
+| **วัตถุประสงค์** (E2 = ฮอร์โมนส์) | One `PolarisSelect` — **หนึ่งวัตถุประสงค์** | **หลายรายการ**: checkboxes; เก็บเป็น `hormone_purpose: string[]` |
+| **JSON เก่า** | `pest_secondary` / `hormone_purpose` เป็น **string ตัวเดียว** | ยังอ่านได้: `normalizeSprayProduct()` แปลง string → `[string]` |
+
+### Non-hormone (ยาหญ้า / ยาแมลง / ยาเชื้อรา) — เงื่อนไขเดิม
+
+- **E2, E2.1, E3.1** ไม่เปลี่ยน logic (dropdown ตามเดิม).
+- **E3.2** เปลี่ยนแค่ **รูปแบบการเลือก** จาก dropdown 1 ค่า → **เลือกได้หลายค่า** (checkbox). ไม่บังคับต้องเลือกรอง (array ว่างได้).
+- **E3.3–E5** เหมือนเดิม.
+
+### Hormone — เงื่อนไข
+
+- ต้องเลือกวัตถุประสงค์ **อย่างน้อย 1 รายการ**; ถ้าเลือก **อื่นๆ** ต้องกรอก `hormone_purpose_other`.
+
+### Code
 
 | # | Change | Detail |
 |---|--------|--------|
-| 1 | **E3.2** | Secondary pest targets are **multiple checkboxes** (not single select). Stored as `pest_secondary: string[]` (option codes). |
-| 2 | **วัตถุประสงค์ (ฮอร์โมน)** | **Multiple checkboxes** from `HORMONE_PURPOSE_OPTIONS`. Stored as `hormone_purpose: string[]`. |
-| 3 | **Legacy data** | `normalizeSprayProduct()` converts old single-string `pest_secondary` / `hormone_purpose` to one-element arrays. |
-| 4 | **Validation** | Hormone: at least one purpose in array; if `other` included, `hormone_purpose_other` required. |
+| 1 | **`createEmptyProduct()`** | `pest_secondary: []`, `hormone_purpose: []` |
+| 2 | **`normalizeSprayProduct(p)`** | ใน `constants.js` — รองรับ legacy string |
+| 3 | **`SprayStagePanel.vue`** | `sessions` map แต่ละ product ผ่าน `normalizeSprayProduct`; `togglePestSecondary`, `toggleHormonePurpose`; import `PolarisCheckbox` + layout `.spray-panel__checkboxes` |
+| 4 | **`wwElement.vue`** | `validateCurrentStep` ใช้ `normalizeSprayProduct(prod)` ก่อนเช็ค hormone array + `other` |
 
-Files: `constants.js` (`normalizeSprayProduct`, `createEmptyProduct` arrays), `SprayStagePanel.vue`, `wwElement.vue`.
+Files: `constants.js`, `SprayStagePanel.vue`, `wwElement.vue`.
 
 ---
 
