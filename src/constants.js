@@ -270,14 +270,29 @@ export function createEmptyProduct() {
     brand: null,
     brand_other: '',
     pest_primary: null,
-    pest_secondary: null,
-    hormone_purpose: null,
+    pest_secondary: [],
+    hormone_purpose: [],
     hormone_purpose_other: '',
     package_size: '',
     purchase_price: '',
     amount: '',
     satisfaction: null,
   }
+}
+
+/** Normalize legacy single-string values to arrays for multi-select fields. */
+export function normalizeSprayProduct(p) {
+  const pest = p.pest_secondary
+  let pest_secondary = []
+  if (Array.isArray(pest)) pest_secondary = [...pest]
+  else if (pest != null && pest !== '') pest_secondary = [String(pest)]
+
+  const hp = p.hormone_purpose
+  let hormone_purpose = []
+  if (Array.isArray(hp)) hormone_purpose = [...hp]
+  else if (hp != null && hp !== '') hormone_purpose = [String(hp)]
+
+  return { ...p, pest_secondary, hormone_purpose }
 }
 
 export const SURVEY_STEPS = [

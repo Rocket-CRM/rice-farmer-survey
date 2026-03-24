@@ -59,6 +59,19 @@ Files: `constants.js`, `SprayStagePanel.vue`, `wwElement.vue`.
 
 ---
 
+## V3.2 Section E — Multi-select E3.2 + hormone purposes
+
+| # | Change | Detail |
+|---|--------|--------|
+| 1 | **E3.2** | Secondary pest targets are **multiple checkboxes** (not single select). Stored as `pest_secondary: string[]` (option codes). |
+| 2 | **วัตถุประสงค์ (ฮอร์โมน)** | **Multiple checkboxes** from `HORMONE_PURPOSE_OPTIONS`. Stored as `hormone_purpose: string[]`. |
+| 3 | **Legacy data** | `normalizeSprayProduct()` converts old single-string `pest_secondary` / `hormone_purpose` to one-element arrays. |
+| 4 | **Validation** | Hormone: at least one purpose in array; if `other` included, `hormone_purpose_other` required. |
+
+Files: `constants.js` (`normalizeSprayProduct`, `createEmptyProduct` arrays), `SprayStagePanel.vue`, `wwElement.vue`.
+
+---
+
 ## V2 Feedback Round 2 (Completed)
 
 | # | Item | Change | Files |

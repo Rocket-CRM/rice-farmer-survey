@@ -679,7 +679,7 @@ import {
   CROP_FIELD_ID, AREA_FIELD_ID, FIELDS,
   MONTH_OPTIONS, WEED_OPTIONS, INSECT_OPTIONS, DISEASE_OPTIONS,
   GROWTH_STAGES, INVESTMENT_OPTIONS, CROP_OPTIONS, RICE_VARIETY_OPTIONS,
-  SURVEY_STEPS, normalizeTel,
+  SURVEY_STEPS, normalizeTel, normalizeSprayProduct,
   initWeedAssessment, initInsectAssessment, initDiseaseAssessment, initSprayApplications,
 } from './constants.js'
 import AssessmentMatrix from './components/AssessmentMatrix.vue'
@@ -1554,24 +1554,25 @@ export default {
           for (let s = 0; s < count; s++) {
             const products = sessions[s]?.products || []
             products.forEach((prod, p) => {
-              if (!prod.pesticide_type)
+              const prodN = normalizeSprayProduct(prod)
+              if (!prodN.pesticide_type)
                 errs[`spray_${stageKey}_${s}_${p}_pesticide_type`] = 'true'
-              if (prod.pesticide_type) {
-                if (!prod.brand)
+              if (prodN.pesticide_type) {
+                if (!prodN.brand)
                   errs[`spray_${stageKey}_${s}_${p}_brand`] = 'true'
-                if (prod.brand === 'other' && !prod.brand_other?.trim())
+                if (prodN.brand === 'other' && !prodN.brand_other?.trim())
                   errs[`spray_${stageKey}_${s}_${p}_brand_other`] = 'true'
               }
-              if (prod.pesticide_type === 'hormone') {
-                if (!prod.hormone_purpose)
+              if (prodN.pesticide_type === 'hormone') {
+                if (!prodN.hormone_purpose.length)
                   errs[`spray_${stageKey}_${s}_${p}_hormone_purpose`] = 'true'
-                if (prod.hormone_purpose === 'other' && !prod.hormone_purpose_other?.trim())
+                if (prodN.hormone_purpose.includes('other') && !prodN.hormone_purpose_other?.trim())
                   errs[`spray_${stageKey}_${s}_${p}_hormone_purpose_other`] = 'true'
               }
-              const amtStr = String(prod.amount ?? '').trim()
+              const amtStr = String(prodN.amount ?? '').trim()
               if (!amtStr)
                 errs[`spray_${stageKey}_${s}_${p}_amount`] = 'true'
-              const priceStr = String(prod.purchase_price ?? '').trim()
+              const priceStr = String(prodN.purchase_price ?? '').trim()
               if (!priceStr)
                 errs[`spray_${stageKey}_${s}_${p}_purchase_price`] = 'true'
             })

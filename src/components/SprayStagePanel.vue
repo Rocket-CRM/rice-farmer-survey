@@ -68,17 +68,23 @@
                   </template>
                 </div>
 
-                <div v-if="prod.pesticide_type === 'hormone'" class="spray-panel__fields spray-panel__fields--full">
-                  <PolarisSelect
-                    label="วัตถุประสงค์ในการใส่"
-                    :options="hormonePurposeOptions"
-                    :modelValue="prod.hormone_purpose"
-                    @update:modelValue="updateProduct(sIdx, pIdx, 'hormone_purpose', $event)"
-                    placeholder="เลือกวัตถุประสงค์"
-                    :error="fieldError(sIdx, pIdx, 'hormone_purpose')"
-                  />
+                <div v-if="prod.pesticide_type === 'hormone'" class="spray-panel__multi">
+                  <PolarisText variant="bodyMd" fontWeight="semibold">วัตถุประสงค์ในการใส่</PolarisText>
+                  <PolarisText variant="bodySm" color="subdued">เลือกได้มากกว่า 1 รายการ</PolarisText>
+                  <div class="spray-panel__checkboxes">
+                    <PolarisCheckbox
+                      v-for="opt in hormonePurposeOptions"
+                      :key="`hp-${opt.value}`"
+                      :label="opt.label"
+                      :modelValue="(prod.hormone_purpose || []).includes(opt.value)"
+                      @update:modelValue="toggleHormonePurpose(sIdx, pIdx, opt.value, $event)"
+                    />
+                  </div>
+                  <PolarisText v-if="fieldError(sIdx, pIdx, 'hormone_purpose')" variant="bodySm" color="critical">
+                    {{ fieldError(sIdx, pIdx, 'hormone_purpose') }}
+                  </PolarisText>
                   <PolarisTextField
-                    v-if="prod.hormone_purpose === 'other'"
+                    v-if="(prod.hormone_purpose || []).includes('other')"
                     label="ระบุวัตถุประสงค์"
                     :modelValue="prod.hormone_purpose_other"
                     @update:modelValue="updateProduct(sIdx, pIdx, 'hormone_purpose_other', $event)"
@@ -87,21 +93,29 @@
                   />
                 </div>
 
-                <div v-if="prod.pesticide_type && prod.pesticide_type !== 'hormone'" class="spray-panel__fields">
-                  <PolarisSelect
-                    label="E3.1 ศัตรูพืชเป้าหมาย (หลัก)"
-                    :options="getPestOptions(prod.pesticide_type)"
-                    :modelValue="prod.pest_primary"
-                    @update:modelValue="updateProduct(sIdx, pIdx, 'pest_primary', $event)"
-                    placeholder="เลือกศัตรูพืชหลัก"
-                  />
-                  <PolarisSelect
-                    label="E3.2 ศัตรูพืชเป้าหมาย (รอง)"
-                    :options="getPestOptions(prod.pesticide_type)"
-                    :modelValue="prod.pest_secondary"
-                    @update:modelValue="updateProduct(sIdx, pIdx, 'pest_secondary', $event)"
-                    placeholder="เลือกศัตรูพืชรอง (ถ้ามี)"
-                  />
+                <div v-if="prod.pesticide_type && prod.pesticide_type !== 'hormone'" class="spray-panel__pest-block">
+                  <div class="spray-panel__fields">
+                    <PolarisSelect
+                      label="E3.1 ศัตรูพืชเป้าหมาย (หลัก)"
+                      :options="getPestOptions(prod.pesticide_type)"
+                      :modelValue="prod.pest_primary"
+                      @update:modelValue="updateProduct(sIdx, pIdx, 'pest_primary', $event)"
+                      placeholder="เลือกศัตรูพืชหลัก"
+                    />
+                  </div>
+                  <div class="spray-panel__multi">
+                    <PolarisText variant="bodyMd" fontWeight="semibold">E3.2 ศัตรูพืชเป้าหมาย (รอง)</PolarisText>
+                    <PolarisText variant="bodySm" color="subdued">เลือกได้มากกว่า 1 รายการ (ถ้ามี)</PolarisText>
+                    <div class="spray-panel__checkboxes">
+                      <PolarisCheckbox
+                        v-for="opt in getPestOptions(prod.pesticide_type)"
+                        :key="`ps-${opt.value}`"
+                        :label="opt.label"
+                        :modelValue="(prod.pest_secondary || []).includes(opt.value)"
+                        @update:modelValue="togglePestSecondary(sIdx, pIdx, opt.value, $event)"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div class="spray-panel__fields">
@@ -156,9 +170,10 @@
 import {
   PolarisCard, PolarisCardHeader, PolarisCardSection,
   PolarisTextField, PolarisSelect, PolarisBlockStack, PolarisText, PolarisButton,
+  PolarisCheckbox,
 } from 'polaris-weweb-styles/components'
 import {
-  createEmptyProduct, SPRAY_TYPE_OPTIONS,
+  createEmptyProduct, normalizeSprayProduct, SPRAY_TYPE_OPTIONS,
   BRAND_OPTIONS_MAP, PEST_TARGET_OPTIONS_MAP, HORMONE_PURPOSE_OPTIONS,
 } from '../constants.js'
 import RatingScale from './RatingScale.vue'
@@ -167,6 +182,7 @@ export default {
   components: {
     PolarisCard, PolarisCardHeader, PolarisCardSection,
     PolarisTextField, PolarisSelect, PolarisBlockStack, PolarisText, PolarisButton,
+    PolarisCheckbox,
     RatingScale,
   },
   props: {
@@ -187,7 +203,9 @@ export default {
       for (let i = 0; i < count; i++) {
         const s = existing[i]
         if (s && s.products?.length) {
-          result.push({ products: [...s.products] })
+          result.push({
+            products: s.products.map(p => normalizeSprayProduct({ ...p })),
+          })
         } else {
           result.push({ products: [createEmptyProduct()] })
         }
@@ -233,12 +251,55 @@ export default {
         return {
           products: s.products.map((p, pi) => {
             if (pi !== pIdx) return { ...p }
+            const amt = p.amount
+            const price = p.purchase_price
+            const pkg = p.package_size
             return {
               ...createEmptyProduct(),
               pesticide_type: newType,
-              amount: p.amount,
+              amount: amt != null && amt !== '' ? String(amt) : '',
+              purchase_price: price != null && price !== '' ? String(price) : '',
+              package_size: pkg != null && pkg !== '' ? String(pkg) : '',
               satisfaction: p.satisfaction,
             }
+          }),
+        }
+      })
+      this.emitUpdate(sessions)
+    },
+    togglePestSecondary(sIdx, pIdx, value, checked) {
+      const sessions = this.sessions.map((s, si) => {
+        if (si !== sIdx) return { products: s.products.map(p => ({ ...p })) }
+        return {
+          products: s.products.map((p, pi) => {
+            if (pi !== pIdx) return { ...p }
+            let arr = [...(p.pest_secondary || [])]
+            if (checked) {
+              if (!arr.includes(value)) arr.push(value)
+            } else {
+              arr = arr.filter(x => x !== value)
+            }
+            return { ...p, pest_secondary: arr }
+          }),
+        }
+      })
+      this.emitUpdate(sessions)
+    },
+    toggleHormonePurpose(sIdx, pIdx, value, checked) {
+      const sessions = this.sessions.map((s, si) => {
+        if (si !== sIdx) return { products: s.products.map(p => ({ ...p })) }
+        return {
+          products: s.products.map((p, pi) => {
+            if (pi !== pIdx) return { ...p }
+            let arr = [...(p.hormone_purpose || [])]
+            if (checked) {
+              if (!arr.includes(value)) arr.push(value)
+            } else {
+              arr = arr.filter(x => x !== value)
+            }
+            let other = p.hormone_purpose_other
+            if (!arr.includes('other')) other = ''
+            return { ...p, hormone_purpose: arr, hormone_purpose_other: other }
           }),
         }
       })
@@ -317,6 +378,26 @@ export default {
     @media (min-width: 768px) {
       grid-template-columns: 1fr;
     }
+  }
+
+  &__pest-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--p-space-300);
+    grid-column: 1 / -1;
+  }
+
+  &__multi {
+    display: flex;
+    flex-direction: column;
+    gap: var(--p-space-150);
+    grid-column: 1 / -1;
+  }
+
+  &__checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--p-space-200) var(--p-space-400);
   }
 
   &__satisfaction {
