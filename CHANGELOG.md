@@ -4,7 +4,7 @@ Single reference for what changed (read this .md instead of re-explaining in pro
 
 ## Current State
 - **Branch**: `main`
-- **Latest commit**: `a29bace` — CHANGELOG V3.2 expansion (feature: `d3c04c5` V3.2 multi-select)
+- **Tip of `main`**: run `git log -1`. **V3.2 feature commit**: `d3c04c5` (multi-select); CHANGELOG expanded in later commits.
 - **Supabase project**: `wkevmsedchftztoolkmi` (CRM)
 - **Merchant ID**: `8f67aa08-dfce-454d-bfb1-effc4ee45f1f`
 
