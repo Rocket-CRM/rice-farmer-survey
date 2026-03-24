@@ -4,7 +4,7 @@ Single reference for what changed (read this .md instead of re-explaining in pro
 
 ## Current State
 - **Branch**: `main`
-- **Latest commit**: `d3c04c5` — V3.2 multi-select E3.2 + hormone purposes
+- **Latest commit**: `a29bace` — CHANGELOG V3.2 expansion (feature: `d3c04c5` V3.2 multi-select)
 - **Supabase project**: `wkevmsedchftztoolkmi` (CRM)
 - **Merchant ID**: `8f67aa08-dfce-454d-bfb1-effc4ee45f1f`
 
