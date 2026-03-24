@@ -69,20 +69,15 @@
                 </div>
 
                 <div v-if="prod.pesticide_type === 'hormone'" class="spray-panel__multi">
-                  <PolarisText variant="bodyMd" fontWeight="semibold">วัตถุประสงค์ในการใส่</PolarisText>
-                  <PolarisText variant="bodySm" color="subdued">เลือกได้มากกว่า 1 รายการ</PolarisText>
-                  <div class="spray-panel__checkboxes">
-                    <PolarisCheckbox
-                      v-for="opt in hormonePurposeOptions"
-                      :key="`hp-${opt.value}`"
-                      :label="opt.label"
-                      :modelValue="(prod.hormone_purpose || []).includes(opt.value)"
-                      @update:modelValue="toggleHormonePurpose(sIdx, pIdx, opt.value, $event)"
-                    />
-                  </div>
-                  <PolarisText v-if="fieldError(sIdx, pIdx, 'hormone_purpose')" variant="bodySm" color="critical">
-                    {{ fieldError(sIdx, pIdx, 'hormone_purpose') }}
-                  </PolarisText>
+                  <MultiSelectDropdown
+                    label="วัตถุประสงค์ในการใส่"
+                    help-text="เลือกได้มากกว่า 1 รายการ — คลิกเพื่อเปิดรายการ แล้วเลือกหลายรายการ"
+                    placeholder="เลือกวัตถุประสงค์..."
+                    :options="hormonePurposeOptions"
+                    :model-value="prod.hormone_purpose || []"
+                    :error="fieldError(sIdx, pIdx, 'hormone_purpose')"
+                    @update:modelValue="setHormonePurposes(sIdx, pIdx, $event)"
+                  />
                   <PolarisTextField
                     v-if="(prod.hormone_purpose || []).includes('other')"
                     label="ระบุวัตถุประสงค์"
@@ -104,17 +99,14 @@
                     />
                   </div>
                   <div class="spray-panel__multi">
-                    <PolarisText variant="bodyMd" fontWeight="semibold">E3.2 ศัตรูพืชเป้าหมาย (รอง)</PolarisText>
-                    <PolarisText variant="bodySm" color="subdued">เลือกได้มากกว่า 1 รายการ (ถ้ามี)</PolarisText>
-                    <div class="spray-panel__checkboxes">
-                      <PolarisCheckbox
-                        v-for="opt in getPestOptions(prod.pesticide_type)"
-                        :key="`ps-${opt.value}`"
-                        :label="opt.label"
-                        :modelValue="(prod.pest_secondary || []).includes(opt.value)"
-                        @update:modelValue="togglePestSecondary(sIdx, pIdx, opt.value, $event)"
-                      />
-                    </div>
+                    <MultiSelectDropdown
+                      label="E3.2 ศัตรูพืชเป้าหมาย (รอง)"
+                      help-text="เลือกได้มากกว่า 1 รายการ (ถ้ามี) — คลิกเพื่อเปิดรายการ"
+                      placeholder="เลือกศัตรูพืชรอง..."
+                      :options="getPestOptions(prod.pesticide_type)"
+                      :model-value="prod.pest_secondary || []"
+                      @update:modelValue="updateProduct(sIdx, pIdx, 'pest_secondary', $event)"
+                    />
                   </div>
                 </div>
 
@@ -170,20 +162,20 @@
 import {
   PolarisCard, PolarisCardHeader, PolarisCardSection,
   PolarisTextField, PolarisSelect, PolarisBlockStack, PolarisText, PolarisButton,
-  PolarisCheckbox,
 } from 'polaris-weweb-styles/components'
 import {
   createEmptyProduct, normalizeSprayProduct, SPRAY_TYPE_OPTIONS,
   BRAND_OPTIONS_MAP, PEST_TARGET_OPTIONS_MAP, HORMONE_PURPOSE_OPTIONS,
 } from '../constants.js'
 import RatingScale from './RatingScale.vue'
+import MultiSelectDropdown from './MultiSelectDropdown.vue'
 
 export default {
   components: {
     PolarisCard, PolarisCardHeader, PolarisCardSection,
     PolarisTextField, PolarisSelect, PolarisBlockStack, PolarisText, PolarisButton,
-    PolarisCheckbox,
     RatingScale,
+    MultiSelectDropdown,
   },
   props: {
     stageKey: { type: String, required: true },
@@ -267,39 +259,16 @@ export default {
       })
       this.emitUpdate(sessions)
     },
-    togglePestSecondary(sIdx, pIdx, value, checked) {
+    setHormonePurposes(sIdx, pIdx, arr) {
+      const next = Array.isArray(arr) ? arr : []
       const sessions = this.sessions.map((s, si) => {
         if (si !== sIdx) return { products: s.products.map(p => ({ ...p })) }
         return {
           products: s.products.map((p, pi) => {
             if (pi !== pIdx) return { ...p }
-            let arr = [...(p.pest_secondary || [])]
-            if (checked) {
-              if (!arr.includes(value)) arr.push(value)
-            } else {
-              arr = arr.filter(x => x !== value)
-            }
-            return { ...p, pest_secondary: arr }
-          }),
-        }
-      })
-      this.emitUpdate(sessions)
-    },
-    toggleHormonePurpose(sIdx, pIdx, value, checked) {
-      const sessions = this.sessions.map((s, si) => {
-        if (si !== sIdx) return { products: s.products.map(p => ({ ...p })) }
-        return {
-          products: s.products.map((p, pi) => {
-            if (pi !== pIdx) return { ...p }
-            let arr = [...(p.hormone_purpose || [])]
-            if (checked) {
-              if (!arr.includes(value)) arr.push(value)
-            } else {
-              arr = arr.filter(x => x !== value)
-            }
             let other = p.hormone_purpose_other
-            if (!arr.includes('other')) other = ''
-            return { ...p, hormone_purpose: arr, hormone_purpose_other: other }
+            if (!next.includes('other')) other = ''
+            return { ...p, hormone_purpose: next, hormone_purpose_other: other }
           }),
         }
       })
@@ -392,12 +361,6 @@ export default {
     flex-direction: column;
     gap: var(--p-space-150);
     grid-column: 1 / -1;
-  }
-
-  &__checkboxes {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--p-space-200) var(--p-space-400);
   }
 
   &__satisfaction {

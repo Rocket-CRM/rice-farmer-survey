@@ -65,14 +65,14 @@ Files: `constants.js`, `SprayStagePanel.vue`, `wwElement.vue`.
 
 | Area | Before | After |
 |------|--------|--------|
-| **E3.2** (non-hormone only) | One `PolarisSelect` — ศัตรูรอง **หนึ่งรายการ** | **หลายรายการ**: `PolarisCheckbox` ต่อตัวเลือก; เก็บเป็น `pest_secondary: string[]` (codes เหมือนเดิม) |
-| **วัตถุประสงค์** (E2 = ฮอร์โมนส์) | One `PolarisSelect` — **หนึ่งวัตถุประสงค์** | **หลายรายการ**: checkboxes; เก็บเป็น `hormone_purpose: string[]` |
+| **E3.2** (non-hormone only) | One `PolarisSelect` — ศัตรูรอง **หนึ่งรายการ** | **หลายรายการ**: `MultiSelectDropdown` (dropdown + panel); เก็บเป็น `pest_secondary: string[]` (codes เหมือนเดิม) |
+| **วัตถุประสงค์** (E2 = ฮอร์โมนส์) | One `PolarisSelect` — **หนึ่งวัตถุประสงค์** | **หลายรายการ**: `MultiSelectDropdown`; เก็บเป็น `hormone_purpose: string[]` |
 | **JSON เก่า** | `pest_secondary` / `hormone_purpose` เป็น **string ตัวเดียว** | ยังอ่านได้: `normalizeSprayProduct()` แปลง string → `[string]` |
 
 ### Non-hormone (ยาหญ้า / ยาแมลง / ยาเชื้อรา) — เงื่อนไขเดิม
 
 - **E2, E2.1, E3.1** ไม่เปลี่ยน logic (dropdown ตามเดิม).
-- **E3.2** เปลี่ยนแค่ **รูปแบบการเลือก** จาก dropdown 1 ค่า → **เลือกได้หลายค่า** (checkbox). ไม่บังคับต้องเลือกรอง (array ว่างได้).
+- **E3.2** เปลี่ยนแค่ **รูปแบบการเลือก** จาก dropdown 1 ค่า → **เลือกได้หลายค่า** (dropdown multi-select). ไม่บังคับต้องเลือกรอง (array ว่างได้).
 - **E3.3–E5** เหมือนเดิม.
 
 ### Hormone — เงื่อนไข
@@ -85,10 +85,11 @@ Files: `constants.js`, `SprayStagePanel.vue`, `wwElement.vue`.
 |---|--------|--------|
 | 1 | **`createEmptyProduct()`** | `pest_secondary: []`, `hormone_purpose: []` |
 | 2 | **`normalizeSprayProduct(p)`** | ใน `constants.js` — รองรับ legacy string |
-| 3 | **`SprayStagePanel.vue`** | `sessions` map แต่ละ product ผ่าน `normalizeSprayProduct`; `togglePestSecondary`, `toggleHormonePurpose`; import `PolarisCheckbox` + layout `.spray-panel__checkboxes` |
-| 4 | **`wwElement.vue`** | `validateCurrentStep` ใช้ `normalizeSprayProduct(prod)` ก่อนเช็ค hormone array + `other` |
+| 3 | **`SprayStagePanel.vue`** | `sessions` map แต่ละ product ผ่าน `normalizeSprayProduct`; `MultiSelectDropdown` + `setHormonePurposes` |
+| 4 | **`MultiSelectDropdown.vue`** | Component ใหม่ — trigger แบบ select + panel เลือกหลายค่า |
+| 5 | **`wwElement.vue`** | `validateCurrentStep` ใช้ `normalizeSprayProduct(prod)` ก่อนเช็ค hormone array + `other` |
 
-Files: `constants.js`, `SprayStagePanel.vue`, `wwElement.vue`.
+Files: `constants.js`, `SprayStagePanel.vue`, `MultiSelectDropdown.vue`, `wwElement.vue`.
 
 ---
 
