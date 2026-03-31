@@ -106,6 +106,7 @@ export const INVESTMENT_OPTIONS = [
   { value: '6', label: 'ลงทุนลดลง 31% - 40%' },
   { value: '7', label: 'ลงทุนลดลง 41% - 50%' },
   { value: '8', label: 'ลงทุนลดลงมากกว่า 50%' },
+  { value: '9', label: 'หยุดการทำนาในฤดูหน้า' },
 ]
 
 export const CROP_OPTIONS = [
