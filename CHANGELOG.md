@@ -2,6 +2,14 @@
 
 Single reference for what changed (read this .md instead of re-explaining in prompts to save tokens).
 
+## Respondent location (Step 6)
+
+- Optional checkbox on review: Thai consent text; if checked, `navigator.geolocation` runs once before submit.
+- Stored in **`form_responses.object_value`** for `e1_e5_spray_applications` under key **`_respondent_location`** (no new DB columns). See `RESPONDENT_LOCATION_KEY` / `GEO_TIMEOUT_MS` in `constants.js`.
+- If GPS fails, survey still submits; JSON may include `error` + warning toast. HTTPS required for geolocation in production.
+
+---
+
 ## Current State
 - **Branch**: `main`
 - **Tip of `main`**: run `git log -1`. **V3.2 feature commit**: `d3c04c5` (multi-select); CHANGELOG expanded in later commits.

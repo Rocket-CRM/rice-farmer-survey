@@ -581,6 +581,16 @@
             </PolarisCardSection>
           </PolarisCard>
 
+          <PolarisCard>
+            <PolarisCardSection>
+              <PolarisCheckbox
+                :modelValue="locationConsentAccepted"
+                label="ยินยอมให้บันทึกตำแหน่งที่อยู่โดยประมาณ เพื่อใช้วิเคราะห์และพัฒนาการบริการ"
+                @update:modelValue="locationConsentAccepted = $event"
+              />
+            </PolarisCardSection>
+          </PolarisCard>
+
           <!-- Submit -->
           <PolarisBanner v-if="submitError" variant="critical">
             {{ submitError }}
@@ -683,6 +693,7 @@ import {
   isPestTargetOtherSlot1, isPestTargetOtherSlot2,
   pestSecondaryHasOtherSlot1, pestSecondaryHasOtherSlot2,
   initWeedAssessment, initInsectAssessment, initDiseaseAssessment, initSprayApplications,
+  RESPONDENT_LOCATION_KEY, GEO_TIMEOUT_MS,
 } from './constants.js'
 import AssessmentMatrix from './components/AssessmentMatrix.vue'
 import SprayStagePanel from './components/SprayStagePanel.vue'
@@ -1229,6 +1240,8 @@ export default {
     const showCancelConfirm = ref(false)
     const showSuccessModal = ref(false)
     const lastSubmissionId = ref(null)
+    /** Step 6: optional geolocation consent before submit */
+    const locationConsentAccepted = ref(false)
 
     // ─── Computed ───
     const currentStepTitle = computed(() =>
@@ -1715,6 +1728,90 @@ export default {
       return responses
     }
 
+    /**
+     * Merges RESPONDENT_LOCATION_KEY into surveyData.e1_e5_spray_applications (form_responses.object_value).
+     * No new DB columns — metadata lives next to `stages` in the same JSON.
+     */
+    async function applyRespondentLocationToSurveyData() {
+      const base = surveyData.e1_e5_spray_applications ?? initSprayApplications()
+      const merged = JSON.parse(JSON.stringify(base))
+      delete merged[RESPONDENT_LOCATION_KEY]
+
+      if (!locationConsentAccepted.value) {
+        surveyData.e1_e5_spray_applications = merged
+        return
+      }
+
+      if (typeof window !== 'undefined' && window.isSecureContext === false) {
+        merged[RESPONDENT_LOCATION_KEY] = {
+          consent: true,
+          error: 'insecure_context',
+          captured_at: null,
+        }
+        showNotification(
+          'warning',
+          'ไม่สามารถใช้ตำแหน่งได้บนหน้าเว็บที่ไม่ปลอดภัย (HTTP) — แบบสอบถามจะถูกส่งตามปกติ',
+        )
+        surveyData.e1_e5_spray_applications = merged
+        return
+      }
+
+      if (typeof navigator === 'undefined' || !navigator.geolocation) {
+        merged[RESPONDENT_LOCATION_KEY] = {
+          consent: true,
+          error: 'unavailable',
+          captured_at: null,
+        }
+        showNotification('warning', 'อุปกรณ์นี้ไม่รองรับการระบุตำแหน่ง — แบบสอบถามจะถูกส่งตามปกติ')
+        surveyData.e1_e5_spray_applications = merged
+        return
+      }
+
+      try {
+        const pos = await new Promise((resolve, reject) => {
+          const timer = setTimeout(
+            () => reject(Object.assign(new Error('timeout'), { code: 3 })),
+            GEO_TIMEOUT_MS,
+          )
+          navigator.geolocation.getCurrentPosition(
+            (p) => {
+              clearTimeout(timer)
+              resolve(p)
+            },
+            (err) => {
+              clearTimeout(timer)
+              reject(err)
+            },
+            { enableHighAccuracy: false, maximumAge: 0, timeout: GEO_TIMEOUT_MS },
+          )
+        })
+        const c = pos.coords
+        merged[RESPONDENT_LOCATION_KEY] = {
+          consent: true,
+          captured_at: new Date().toISOString(),
+          latitude: c.latitude,
+          longitude: c.longitude,
+          accuracy_m:
+            c.accuracy != null ? Math.round(c.accuracy * 100) / 100 : null,
+        }
+      } catch (e) {
+        let error = 'unavailable'
+        if (e && e.code === 1) error = 'denied'
+        else if (e && e.code === 2) error = 'unavailable'
+        else if (e && (e.code === 3 || e.message === 'timeout')) error = 'timeout'
+        merged[RESPONDENT_LOCATION_KEY] = {
+          consent: true,
+          error,
+          captured_at: null,
+        }
+        showNotification(
+          'warning',
+          'ไม่สามารถบันทึกตำแหน่งได้ — แบบสอบถามจะถูกส่งตามปกติ',
+        )
+      }
+      surveyData.e1_e5_spray_applications = merged
+    }
+
     // ─── Submit ───
     async function handleSubmit() {
       const failedStep = validateAllSteps()
@@ -1732,6 +1829,8 @@ export default {
       debugLog('Starting submission...')
 
       try {
+        await applyRespondentLocationToSurveyData()
+
         const client = supabase.value
         if (!client) throw new Error('Supabase not configured')
 
@@ -1847,6 +1946,7 @@ export default {
       showCancelConfirm.value = false
       showSuccessModal.value = false
       lastSubmissionId.value = null
+      locationConsentAccepted.value = false
 
       setCurrentPhaseVar('tel_lookup')
       setCurrentStepVar(1)
@@ -1901,6 +2001,7 @@ export default {
       removeSignupImage, removeProfileImage,
       nextStep, prevStep, validateAllSteps, updateSprayStage,
       monthLabel, investmentLabel, cropLabel, foundCount,
+      locationConsentAccepted,
       handleSubmit, dismissNotification, reset, cancelSurvey, confirmCancel,
       showCancelConfirm, showSuccessModal, lastSubmissionId, closeSuccessAndReset,
     }

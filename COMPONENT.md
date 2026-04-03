@@ -114,6 +114,26 @@ x-merchant-id: 8f67aa08-dfce-454d-bfb1-effc4ee45f1f
 | `form_submissions` | `INSERT` for RICE_BIGGROWER_2026 survey |
 | `form_responses` | `INSERT` all survey field responses (14-19 rows) |
 
+### Respondent location (optional, Step 6)
+
+If the farmer checks consent on the review screen, the app requests **one** browser geolocation read before insert. Coordinates are **not** new database columns. They are stored inside the existing **`form_responses.object_value`** for field **`e1_e5_spray_applications`**, under the JSON key **`_respondent_location`** (see `RESPONDENT_LOCATION_KEY` in `constants.js`), alongside `stages`.
+
+Typical success shape:
+
+```json
+{
+  "consent": true,
+  "captured_at": "2026-04-01T12:00:00.000Z",
+  "latitude": 13.7563,
+  "longitude": 100.5018,
+  "accuracy_m": 42
+}
+```
+
+On failure (permission denied, timeout, insecure HTTP context, etc.), submission still completes; the same key may contain `{ "consent": true, "error": "denied|timeout|...", "captured_at": null }` and a warning toast is shown.
+
+**HTTPS:** Geolocation requires a **secure context** in production (HTTPS). `http://` pages (except `localhost`) cannot access GPS reliably.
+
 ### Phone Number Normalization
 
 All phone inputs are normalized to `+66XXXXXXXXX` format before any DB operation:
@@ -135,6 +155,8 @@ These values are baked into the component and match existing database records:
 | `CROP_FIELD_ID` | `c0000000-0000-0000-0000-000000000001` | Crop field in USER_PROFILE |
 | `AREA_FIELD_ID` | `c0000000-0000-0000-0000-000000000002` | Area field in USER_PROFILE |
 | `FIELDS` | 19 field objects | Every survey field's UUID, type, validation |
+| `RESPONDENT_LOCATION_KEY` | `_respondent_location` | Optional GPS metadata inside E1–E5 spray JSON |
+| `GEO_TIMEOUT_MS` | `12000` | Browser geolocation timeout (ms) |
 
 All **survey field IDs** (A1-A9, B, C, D, E1-E7) are hardcoded UUIDs matching rows in `form_fields` for the RICE_BIGGROWER_2026 template. The component does not fetch the form structure at runtime.
 
@@ -145,7 +167,7 @@ All **option lists** are also hardcoded:
 - 9 insect/pest species (C1)
 - 11 disease types (D1)
 - 4 growth stages (C2/D2/E)
-- 8 investment plan options (E7)
+- 9 investment plan options (E7)
 - 7 crop types (signup)
 - 5 spray product types (E3)
 

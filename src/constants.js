@@ -1,3 +1,9 @@
+/** Key inside `e1_e5_spray_applications` JSON (`form_responses.object_value`) for optional respondent GPS metadata */
+export const RESPONDENT_LOCATION_KEY = '_respondent_location'
+
+/** Geolocation request timeout (ms) — browser + submit flow */
+export const GEO_TIMEOUT_MS = 12000
+
 export const FORM_ID = '622bed39-c4df-4d5d-9c4b-2ac4873104fa'
 export const FORM_CODE = 'RICE_BIGGROWER_2026'
 export const MERCHANT_ID = '8f67aa08-dfce-454d-bfb1-effc4ee45f1f'
